@@ -8,7 +8,7 @@ To compute normative qMRI metrics from large cohort of multi-center multi-vendor
 
 ## Data 
 
-Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/index.html) of healthy subjects acquired and analyzed within [spine generic protocol](https://github.com/sct-pipeline/spine-generic) project.
+Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/index.html) of healthy subjects [acquired](https://osf.io/tt4z9/) and [analyzed](https://spine-generic.readthedocs.io/en/latest/documentation.html#getting-started) within _spine generic protocol_ project.
 
 ## Prerequisites
 [Spinal Cord Toolbox (SCT) v4.3](https://github.com/neuropoly/spinalcordtoolbox)
