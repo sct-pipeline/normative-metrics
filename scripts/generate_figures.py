@@ -8,6 +8,7 @@
 # Optional option:
 #   -path-results - directory with *.csv files
 #
+# Inspired by - https://github.com/sct-pipeline/spine-generic/blob/master/processing/generate_figure.py
 # Authors: Julien Cohen-Adad, Jan Valosek
 
 import os
@@ -16,6 +17,7 @@ import tqdm
 import sys
 import glob
 import csv
+import pandas as pd
 
 import logging
 
@@ -25,8 +27,14 @@ logger.setLevel(logging.INFO)  # default: logging.DEBUG, logging.INFO
 hdlr = logging.StreamHandler(sys.stdout)
 logging.root.addHandler(hdlr)
 
+# List subject to remove, associated with contrast
+# TODO - update this
+SUBJECTS_TO_REMOVE = [
+    #{'subject': 'sub-oxfordFmrib04', 'metric': 'csa_t1'},
+]
 
 # List of sites to exclude based on the metric
+# TODO - update this
 SITES_TO_EXCLUDE = {
     'mtr': ['stanford',  # Used different TR.
     ]
@@ -86,6 +94,86 @@ FONTSIZE = 15
 TICKSIZE = 10
 LABELSIZE = 15
 
+# TODO - modify this function to save metrics for individual ROI and levels
+def aggregate_per_site(dict_results, metric):
+    """
+    Aggregate metrics per site. This function assumes that the file participants.tsv is present in folder ./data/
+    :param dict_results:
+    :param metric: Metric type
+    :return:
+    """
+    # Build Panda DF of participants based on participants.tsv file
+    if os.path.isfile('data/participants.tsv'):
+        participants = pd.read_csv(os.path.join('data/participants.tsv'), sep="\t")
+    else:
+        raise FileNotFoundError("File \"participants.tsv\" was not found.")
+
+    # Fetch specific field for the selected metric
+    metric_field = metric_to_field[metric]
+    # Build a dictionary that aggregates values per site
+    results_agg = {}
+    # Loop across lines and fill dict of aggregated results
+    subjects_removed = []
+    for i in tqdm.tqdm(range(len(dict_results)), unit='iter', unit_scale=False, desc="Loop across subjects",
+                       ascii=False,
+                       ncols=80):
+        filename = dict_results[i]['Filename']
+        logger.debug('Filename: ' + filename)
+        # Fetch metadata for the site
+        # dataset_description = read_dataset_description(filename, path_data)
+        # cluster values per site
+        subject = fetch_subject(filename)
+        # check if subject needs to be discarded
+        if not remove_subject(subject, metric):
+            # Fetch index of row corresponding to subject
+            rowIndex = participants[participants['participant_id'] == subject].index
+            # Add column "val" with metric value
+            participants.loc[rowIndex, 'val'] = dict_results[i][metric_field]
+            site = participants['institution_id'][rowIndex].array[0]
+            if not site in results_agg.keys():
+                # if this is a new site, initialize sub-dict
+                results_agg[site] = {}
+                results_agg[site][
+                    'site'] = site  # need to duplicate in order to be able to sort using vendor AND site with Pandas
+                results_agg[site]['vendor'] = participants['manufacturer'][rowIndex].array[0]
+                results_agg[site]['model'] = participants['manufacturers_model_name'][rowIndex].array[0]
+                results_agg[site]['label'] = dict_results[0]['Label']
+                # TODO - save values for individual ROI - now it does not work
+                # create dict {'vertlevel': 'val'}
+                results_agg[site]['val'] = {}
+            # add val for site (ignore None)
+            val = dict_results[i][metric_field]
+            # add vertlevel for site
+            vertlevel = dict_results[i]['VertLevel']
+            if not val == 'None':
+                results_agg[site]['val'][vertlevel] = val
+        else:
+            subjects_removed.append(subject)
+    logger.info("Subjects removed: {}".format(subjects_removed))
+    return results_agg
+
+def fetch_subject(filename):
+    """
+    Get subject from filename
+    :param filename:
+    :return: subject
+    """
+    path, file = os.path.split(filename)
+    subject = path.split(os.sep)[-2]
+    return subject
+
+def remove_subject(subject, metric):
+    """
+    Check if subject should be removed
+    :param subject:
+    :param metric:
+    :return: Bool
+    """
+    for subject_to_remove in SUBJECTS_TO_REMOVE:
+        if subject_to_remove['subject'] == subject and subject_to_remove['metric'] == metric:
+            return True
+    return False
+
 
 def get_parameters():
     parser = argparse.ArgumentParser(
@@ -141,6 +229,10 @@ def main():
         _, csv_file_small = os.path.split(csv_file)
         metric = file_to_metric[csv_file_small]
 
+        # fetch mean, std, etc. per site
+        results_dict = aggregate_per_site(dict_results, metric)
+
+        print('done')
 
 if __name__ == "__main__":
     main()
