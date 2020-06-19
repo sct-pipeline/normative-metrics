@@ -2,6 +2,12 @@
 #
 # Generate figures for individual qMRI metrics
 #
+# Usage:
+#   python generate_figures.py -path-results ~/spineGeneric-multi-subject_results/results/
+#
+# Optional option:
+#   -path-results - directory with *.csv files
+#
 # Authors: Julien Cohen-Adad, Jan Valosek
 
 import os
@@ -9,6 +15,15 @@ import argparse
 import tqdm
 import sys
 import glob
+import csv
+
+import logging
+
+# Initialize logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)  # default: logging.DEBUG, logging.INFO
+hdlr = logging.StreamHandler(sys.stdout)
+logging.root.addHandler(hdlr)
 
 
 # List of sites to exclude based on the metric
@@ -107,9 +122,25 @@ def main():
     csv_files = glob.glob('*perlevel.csv')
 
     if not csv_files:
-        raise RuntimeError("Variable 'csv_files' is empty, i.e. no *.csv files were found in current directory.")
+        raise RuntimeError("No *.csv files were found in current directory. You can specify directory with *.csv files "
+                           " by -path-results flag.")
 
-    print(csv_files)
+    # loop across individual .csv files (i.e., across individual qMRI metrics)
+    for csv_file in csv_files:
+        print(csv_file)
+
+        # open .csv file and create dict
+        logger.info('\nProcessing: ' + csv_file)
+        dict_results = []
+        with open(csv_file, newline='') as f_csv:
+            reader = csv.DictReader(f_csv)
+            for row in reader:
+                dict_results.append(row)
+
+        # fetch metric name from .csv file
+        _, csv_file_small = os.path.split(csv_file)
+        metric = file_to_metric[csv_file_small]
+
 
 if __name__ == "__main__":
     main()
