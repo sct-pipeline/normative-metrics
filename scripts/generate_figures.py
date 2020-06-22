@@ -19,6 +19,7 @@ import glob
 import csv
 import pandas as pd
 
+from collections import defaultdict
 import logging
 
 # Initialize logging
@@ -137,16 +138,18 @@ def aggregate_per_site(dict_results, metric):
                     'site'] = site  # need to duplicate in order to be able to sort using vendor AND site with Pandas
                 results_agg[site]['vendor'] = participants['manufacturer'][rowIndex].array[0]
                 results_agg[site]['model'] = participants['manufacturers_model_name'][rowIndex].array[0]
-                results_agg[site]['label'] = dict_results[0]['Label']
-                # TODO - save values for individual ROI - now it does not work
-                # create dict {'vertlevel': 'val'}
-                results_agg[site]['val'] = {}
-            # add val for site (ignore None)
+                # initialize empty sub-dict for metric values with values as list (will be list of
+                # metrics for individual subjects within siteú
+                results_agg[site]['val'] = defaultdict(list)
+            # get label (ROI name)
+            label = dict_results[i]['Label']
+            # get val for site (ignore None)
             val = dict_results[i][metric_field]
-            # add vertlevel for site
+            # get vertlevel for site
             vertlevel = dict_results[i]['VertLevel']
             if not val == 'None':
-                results_agg[site]['val'][vertlevel] = val
+                # append data into sub-dict {'vertlevel' 'label': 'metric value'} (key is tuple, values is list)
+                results_agg[site]['val'][(vertlevel, label)].append(float(val))
         else:
             subjects_removed.append(subject)
     logger.info("Subjects removed: {}".format(subjects_removed))
