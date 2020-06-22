@@ -139,7 +139,7 @@ def aggregate_per_site(dict_results, metric):
                 results_agg[site]['vendor'] = participants['manufacturer'][rowIndex].array[0]
                 results_agg[site]['model'] = participants['manufacturers_model_name'][rowIndex].array[0]
                 # initialize empty sub-dict for metric values with values as list (will be list of
-                # metrics for individual subjects within siteú
+                # metrics for individual subjects within site
                 results_agg[site]['val'] = defaultdict(list)
             # get label (ROI name)
             label = dict_results[i]['Label']
@@ -232,8 +232,11 @@ def main():
         _, csv_file_small = os.path.split(csv_file)
         metric = file_to_metric[csv_file_small]
 
-        # fetch mean, std, etc. per site
+        # fetch metric values per site
         results_dict = aggregate_per_site(dict_results, metric)
+
+        # make it a pandas structure (easier for manipulations)
+        df = pd.DataFrame.from_dict(results_dict, orient='index')
 
         print('done')
 
