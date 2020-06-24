@@ -148,7 +148,7 @@ def aggregate_per_site(dict_results, metric):
             # get vertlevel for site
             vertlevel = dict_results[i]['VertLevel']
             if not val == 'None':
-                # append data into sub-dict {'vertlevel' 'label': 'metric value'} (key is tuple, values is list)
+                # append data into sub-dict {'vertlevel' 'label': 'metric value'} (key is tuple, values are list)
                 results_agg[site]['val'][(vertlevel, label)].append(float(val))
         else:
             subjects_removed.append(subject)
