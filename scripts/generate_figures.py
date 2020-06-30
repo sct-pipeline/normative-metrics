@@ -19,7 +19,9 @@ import glob
 import csv
 import pandas as pd
 
+import numpy as np
 from collections import defaultdict
+import matplotlib.pyplot as plt
 import logging
 
 # Initialize logging
@@ -90,6 +92,23 @@ scaling_factor = {
     'mtsat': 1,
     }
 
+# region-of-interest
+roi_to_label =  {
+    'spinal cord': 'Spinal cord',
+    'white matter': 'White matter',
+    'gray matter': 'Gray matter',
+    'dorsal columns': 'Dorsal columns',
+    'lateral funiculi': 'Lateral funiculi/columns',
+    'ventral funiculi': 'Ventral funiculi/columns',
+}
+
+levels_to_label = {
+    '2': 'C2',
+    '3': 'C3',
+    '4': 'C4',
+    '5': 'C5',
+}
+
 # FIGURE PARAMETERS
 FONTSIZE = 15
 TICKSIZE = 10
@@ -155,6 +174,14 @@ def aggregate_per_site(dict_results, metric):
     logger.info("Subjects removed: {}".format(subjects_removed))
     return results_agg
 
+# def compute_stats(results_dict):
+#     # loop across individual sites
+#     for key in results_dict:
+#         # initialize mean value for individual sites
+#         results_dict[key]['mean'] = ()
+#
+#     return results_dict
+
 def fetch_subject(filename):
     """
     Get subject from filename
@@ -176,7 +203,6 @@ def remove_subject(subject, metric):
         if subject_to_remove['subject'] == subject and subject_to_remove['metric'] == metric:
             return True
     return False
-
 
 def get_parameters():
     parser = argparse.ArgumentParser(
@@ -235,8 +261,45 @@ def main():
         # fetch metric values per site
         results_dict = aggregate_per_site(dict_results, metric)
 
+        #results_dict = compute_stats(results_dict)
+
         # make it a pandas structure (easier for manipulations)
         df = pd.DataFrame.from_dict(results_dict, orient='index')
+
+        # get individual sites
+        site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
+
+        # ------------------------------------------------------------------
+        # generate figure - level evolution per ROI
+        # ------------------------------------------------------------------
+        fig, ax = plt.subplots(figsize=(7, 7))
+
+        # loop across sites
+        for site in site_sorted:
+            # initialize dict - {label: mean_metric}
+            mean_dict = dict()
+            # loop across roi/labels
+            for index, label in enumerate(roi_to_label.keys()):
+                # create individual subplots
+                ax = plt.subplot(2,3,index+1)
+                mean_value = list()
+                # loop across levels
+                for level in levels_to_label.keys():
+                    # append mean metric value across individual subjects within site perlevel (C2,C3,C4,C5)
+                    mean_value.append(np.mean(df['val'][site][level,label]))
+                    # fill dict - {label: mean_metric}, e.g. - {'spinal cord': [0.6, 0.6, 0.5, 0.3], 'white matter': [0.6, 0.7, 0.5, 0.4], ...}
+                    mean_dict[label] = mean_value
+
+                # plot mean values perlevel (C2, C3, C4, C5)
+                plt.scatter([float(key) for key in levels_to_label],
+                            mean_dict[label],
+                            label=site)
+                # rename xticks to C2, C3, C4, C5
+                plt.xticks([float(key) for key in levels_to_label], levels_to_label.values())
+                plt.ylabel(metric_to_label[metric],fontsize=FONTSIZE)
+                plt.title(roi_to_label[label])
+                ax.legend(loc='lower left', fontsize=FONTSIZE-5)
+        plt.show()
 
         print('done')
 
