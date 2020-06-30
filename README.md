@@ -32,6 +32,10 @@ Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/
 
 `sct_run_batch -jobs -1 -path-data ~/data/spineGeneric-multi-subject/ -path-output ~/spineGeneric-multi-subject_results/ processing/process_data.sh`
 
-- Compute qMRI metrics from various ROI per individual vertebral levels:
+- Compute qMRI metrics from various ROI per individual vertebral levels using `extract_normative_metrics.sh` script:
+
+`sct_run_batch -jobs -1 -path-data ~/spineGeneric-multi-subject/ -path-output ~/spineGeneric-multi-subject_results/ -include <SUBJECT> scripts/extract_normative_metrics.sh`
+
+- Generate figures
 
 `...`
