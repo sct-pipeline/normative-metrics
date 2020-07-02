@@ -52,6 +52,14 @@ vendor_to_color = {
     'Siemens': 'limegreen',
     }
 
+# marker change for individual vendors for scatter plots
+# https://matplotlib.org/3.2.2/api/markers_api.html
+vendor_to_marker = {
+    'GE': 'o',          # circle
+    'Philips': 'v',     # triangle down
+    'Siemens': 's',     # square
+}
+
 # fetch qMRI metrics based on csv file
 file_to_metric = {
     'DWI_FA_perlevel.csv': 'dti_fa',
@@ -272,7 +280,7 @@ def main():
         # ------------------------------------------------------------------
         # generate figure - level evolution per ROI
         # ------------------------------------------------------------------
-        fig, ax = plt.subplots(figsize=(7, 7))
+        fig = plt.subplots(figsize=(14, 7))
 
         # loop across sites
         for site in site_sorted:
@@ -289,16 +297,22 @@ def main():
                     mean_value.append(np.mean(df['val'][site][level,label]))
                     # fill dict - {label: mean_metric}, e.g. - {'spinal cord': [0.6, 0.6, 0.5, 0.3], 'white matter': [0.6, 0.7, 0.5, 0.4], ...}
                     mean_dict[label] = mean_value
-
+                # get vendor for current site
+                vendor = df.vendor[site]
                 # plot mean values perlevel (C2, C3, C4, C5)
                 plt.scatter([float(key) for key in levels_to_label],
                             mean_dict[label],
+                            marker=vendor_to_marker[vendor],    # change marker symbol based on vendor
                             label=site)
                 # rename xticks to C2, C3, C4, C5
                 plt.xticks([float(key) for key in levels_to_label], levels_to_label.values())
                 plt.ylabel(metric_to_label[metric],fontsize=FONTSIZE)
                 plt.title(roi_to_label[label])
-                ax.legend(loc='lower left', fontsize=FONTSIZE-5)
+        # place legend next to last subplot
+        plt.legend(bbox_to_anchor=(2, 1), fontsize=FONTSIZE-5)
+        # Move subplots closer to each other
+        plt.subplots_adjust(wspace=-0.5)
+        plt.tight_layout()
         plt.show()
 
         print('done')
