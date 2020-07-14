@@ -16,21 +16,21 @@ Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/
 [Spine generic v1.1](https://github.com/sct-pipeline/spine-generic)
 
 ## Pipeline
-- [Download](https://openneuro.org/datasets/ds001919/versions/1.0.8/download) multi-center multi-subject data from OpenNeuro platform, e.g.:
+- [Download](https://github.com/spine-generic/data-multi-subject#download-zip-package-recommended) multi-center multi-subject data from GitHub webpage using ``curl`` command:
 
-`aws s3 sync --no-sign-request s3://openneuro.org/ds001919 ds001919-download/`
+`curl -o spinegeneric.zip -L https://github.com/spine-generic/data-multi-subject/archive/master.zip`
 
-- Rename downloaded data:
- 
-`mv ds001919-download ~/spineGeneric-multi-subject`
+- Unzip downloaded data:
+
+`unzip spinegeneric.zip`
 
 - Create a folder where results will be generated:
 
-`mkdir ~/spineGeneric-multi-subject_results`
+`mkdir ~/data-multi-subject-master_results`
 
 - Analyze data using [process_data.sh](https://github.com/sct-pipeline/spine-generic/blob/master/processing/process_data.sh) script:
 
-`sct_run_batch -jobs -1 -path-data ~/data/spineGeneric-multi-subject/ -path-output ~/spineGeneric-multi-subject_results/ processing/process_data.sh`
+`sct_run_batch -jobs -1 -path-data ~/data-multi-subject-master -path-output ~/data-multi-subject-master_results/ -continue-on-error 1 -task <PATH_TO_SPINE-GENERIC>/spine-generic/process_data.sh`
 
 - Compute qMRI metrics from various ROI per individual vertebral levels using `extract_normative_metrics.sh` script:
 
