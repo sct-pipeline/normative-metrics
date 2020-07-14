@@ -28,7 +28,7 @@ Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/
 
 `mkdir ~/data-multi-subject-master_results`
 
-- Analyze data using [process_data.sh](https://github.com/sct-pipeline/spine-generic/blob/master/processing/process_data.sh) script:
+- Analyze data using [process_data.sh](https://github.com/spine-generic/spine-generic/blob/master/process_data.sh) script:
 
 `sct_run_batch -jobs -1 -path-data ~/data-multi-subject-master -path-output ~/data-multi-subject-master_results/ -continue-on-error 1 -task <PATH_TO_SPINE-GENERIC>/spine-generic/process_data.sh`
 
