@@ -136,6 +136,8 @@ def aggregate_per_site(dict_results, metric):
     else:
         raise FileNotFoundError("File \"participants.tsv\" was not found.")
 
+    summary_per_vendor(participants)
+
     # Fetch specific field for the selected metric
     metric_field = metric_to_field[metric]
     # Build a dictionary that aggregates values per site
@@ -189,6 +191,23 @@ def aggregate_per_site(dict_results, metric):
 #         results_dict[key]['mean'] = ()
 #
 #     return results_dict
+
+def summary_per_vendor(participants):
+    """
+    Some pervendor computation. Only for debug, not used yet.
+    :return:
+    """
+    # compute number of subjects pervendor
+    print('Number of subjects per vendor:')
+    for vendor in vendor_to_color.keys():
+        print('{}: {}'.format(vendor, sum(participants['manufacturer'] == vendor)))
+
+    # compute number of sites pervendor
+    print('Number of sites per vendor:')
+    for vendor in vendor_to_color.keys():
+        print('{}: {}'.format(vendor, pd.unique(participants.loc[participants['manufacturer'] == vendor,
+                                                                 'institution_id']).size))
+
 
 def fetch_subject(filename):
     """
@@ -284,7 +303,7 @@ def main():
 
         # loop across sites
         for site in site_sorted:
-            # initialize dict - {label: mean_metric}
+            # initialize dict for each loop - {label: mean_metric}
             mean_dict = dict()
             # loop across roi/labels
             for index, label in enumerate(roi_to_label.keys()):
