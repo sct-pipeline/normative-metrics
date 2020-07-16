@@ -319,16 +319,19 @@ def main():
                 # get vendor for current site
                 vendor = df.vendor[site]
                 # plot mean values perlevel (C2, C3, C4, C5)
-                plt.scatter([float(key) for key in levels_to_label],
+                plt.plot([float(key) for key in levels_to_label],
                             mean_dict[label],
                             marker=vendor_to_marker[vendor],    # change marker symbol based on vendor
+                            markersize=8,                       # size of marker symbol
+                            alpha=0.5,                          # transparency
                             label=site)
                 # rename xticks to C2, C3, C4, C5
                 plt.xticks([float(key) for key in levels_to_label], levels_to_label.values())
                 plt.ylabel(metric_to_label[metric],fontsize=FONTSIZE)
+                plt.grid(axis='y', linestyle="--")
                 plt.title(roi_to_label[label])
         # place legend next to last subplot
-        plt.legend(bbox_to_anchor=(2, 1), fontsize=FONTSIZE-5)
+        plt.legend(bbox_to_anchor=(1.5, 1), fontsize=FONTSIZE-5)
         # Move subplots closer to each other
         plt.subplots_adjust(wspace=-0.5)
         plt.tight_layout()
