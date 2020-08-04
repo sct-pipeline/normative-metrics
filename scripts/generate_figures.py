@@ -157,9 +157,12 @@ def aggregate_per_site(dict_results, metric):
                     'site'] = site  # need to duplicate in order to be able to sort using vendor AND site with Pandas
                 results_agg[site]['vendor'] = participants['manufacturer'][rowIndex].array[0]
                 results_agg[site]['model'] = participants['manufacturers_model_name'][rowIndex].array[0]
-                # initialize empty sub-dict for metric values with values as list (will be list of
+                # initialize empty sub-dict for metric values with values as list
                 # metrics for individual subjects within site
                 results_agg[site]['val'] = defaultdict(list)
+                # initialize empty sub-dict for metric mean values
+                # metrics mean for within site
+                results_agg[site]['mean'] = defaultdict(int)
             # get label (ROI name)
             label = dict_results[i]['Label']
             # get val for site (ignore None)
@@ -169,6 +172,9 @@ def aggregate_per_site(dict_results, metric):
             if not val == 'None':
                 # append data into sub-dict {'vertlevel' 'label': 'metric value'} (key is tuple, values are list)
                 results_agg[site]['val'][(vertlevel, label)].append(float(val))
+            # compute mean perlevel per ROI/label
+            results_agg[site]['mean'][(vertlevel, label)] = np.mean(results_agg[site]['val'][(vertlevel, label)])
+
         else:
             subjects_removed.append(subject)
     logger.info("Subjects removed: {}".format(subjects_removed))
@@ -305,7 +311,7 @@ def main():
                 # loop across levels
                 for level in levels_to_label.keys():
                     # append mean metric value across individual subjects within site perlevel (C2,C3,C4,C5)
-                    mean_value.append(np.mean(df['val'][site][level,label]))
+                    mean_value.append(df['mean'][site][level,label])
                     # fill dict - {label: mean_metric}, e.g. - {'spinal cord': [0.6, 0.6, 0.5, 0.3], 'white matter': [0.6, 0.7, 0.5, 0.4], ...}
                     mean_dict[label] = mean_value
                 # get vendor for current site
