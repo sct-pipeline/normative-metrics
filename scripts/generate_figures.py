@@ -335,7 +335,12 @@ def main():
         # Move subplots closer to each other
         plt.subplots_adjust(wspace=-0.5)
         plt.tight_layout()
-        plt.show()
+        # save figure
+        fname_fig = os.path.join(args.path_results, metric + '.png')
+        plt.savefig(fname_fig, dpi=200)
+        logger.info('Created: ' + fname_fig)
+
+        #plt.show()
 
         print('done')
 
