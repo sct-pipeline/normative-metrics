@@ -118,7 +118,7 @@ def aggregate_per_site(dict_results, metric):
     Aggregate metrics per site. This function assumes that the file participants.tsv is present in folder ./data/
     :param dict_results:
     :param metric: Metric type
-    :return:
+    :return: results_agg: nested dict with metric values per site
     """
     # Build Panda DF of participants based on participants.tsv file
     if os.path.isfile('data/participants.tsv'):
@@ -126,15 +126,13 @@ def aggregate_per_site(dict_results, metric):
     else:
         raise FileNotFoundError("File \"participants.tsv\" was not found.")
 
-    summary_per_vendor(participants)
-
     # Fetch specific field for the selected metric
     metric_field = metric_to_field[metric]
     # Build a dictionary that aggregates values per site
     results_agg = {}
     # Loop across lines and fill dict of aggregated results
     subjects_removed = []
-    for i in tqdm.tqdm(range(len(dict_results)), unit='iter', unit_scale=False, desc="Loop across subjects",
+    for i in tqdm.tqdm(range(len(dict_results)), unit='iter', unit_scale=False, desc="Loop across lines.",
                        ascii=False,
                        ncols=80):
         filename = dict_results[i]['Filename']
@@ -178,31 +176,29 @@ def aggregate_per_site(dict_results, metric):
         else:
             subjects_removed.append(subject)
     logger.info("Subjects removed: {}".format(subjects_removed))
+
     return results_agg
 
-# def compute_stats(results_dict):
-#     # loop across individual sites
-#     for key in results_dict:
-#         # initialize mean value for individual sites
-#         results_dict[key]['mean'] = ()
-#
-#     return results_dict
-
-def summary_per_vendor(participants):
+def summary_per_vendor(df):
     """
-    Some pervendor computation. Only for debug, not used yet.
+    Compute number of used (so, after exclusion) subjects and sites per vendor.
     :return:
     """
     # compute number of subjects pervendor
     print('Number of subjects per vendor:')
+
     for vendor in vendor_to_color.keys():
-        print('{}: {}'.format(vendor, sum(participants['manufacturer'] == vendor)))
+
+        num_of_sub = 0
+        for site in df[df['vendor'] == vendor]['site']:
+            num_of_sub = num_of_sub + len(df[df['vendor'] == vendor]['val'][site]['5', 'spinal cord'])
+
+        print('{}: {}'.format(vendor, num_of_sub))
 
     # compute number of sites pervendor
     print('Number of sites per vendor:')
     for vendor in vendor_to_color.keys():
-        print('{}: {}'.format(vendor, pd.unique(participants.loc[participants['manufacturer'] == vendor,
-                                                                 'institution_id']).size))
+        print('{}: {}'.format(vendor, sum(df['vendor'] == vendor)))
 
 
 def fetch_subject(filename):
@@ -284,13 +280,14 @@ def main():
         # fetch metric values per site
         results_dict = aggregate_per_site(dict_results, metric)
 
-        #results_dict = compute_stats(results_dict)
-
         # make it a pandas structure (easier for manipulations)
         df = pd.DataFrame.from_dict(results_dict, orient='index')
 
         # get individual sites
         site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
+
+        # compute per vendor summary
+        summary_per_vendor(df)
 
         # ------------------------------------------------------------------
         # generate figure - level evolution per ROI for individual sites
