@@ -83,21 +83,11 @@ metric_to_field = {
 # fetch metric field
 metric_to_label = {
     'dti_fa': 'Fractional anisotropy',
-    'dti_md': 'Mean diffusivity [$mm^2.s^-1$]',
-    'dti_ad': 'Axial diffusivity [$mm^2.s^-1$]',
-    'dti_rd': 'Radial diffusivity [$mm^2.s^-1$]',
+    'dti_md': 'Mean diffusivity [$mm^2.s^{-1}$]',
+    'dti_ad': 'Axial diffusivity [$mm^2.s^{-1}$]',
+    'dti_rd': 'Radial diffusivity [$mm^2.s^{-1}$]',
     'mtr': 'Magnetization transfer ratio [%]',
     'mtsat': 'Magnetization transfer saturation [a.u.]',
-    }
-
-# scaling factor (for display)
-scaling_factor = {
-    'dti_fa': 1,
-    'dti_md': 1000,
-    'dti_ad': 1000,
-    'dti_rd': 1000,
-    'mtr': 1,
-    'mtsat': 1,
     }
 
 # region-of-interest
@@ -297,9 +287,11 @@ def main():
         site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
 
         # ------------------------------------------------------------------
-        # generate figure - level evolution per ROI
+        # generate figure - level evolution per ROI for individual sites
         # ------------------------------------------------------------------
-        fig = plt.subplots(figsize=(14, 7))
+        fig, _ = plt.subplots(figsize=(14, 7))
+        # add master title for whole figure
+        fig.suptitle(metric_to_label[metric], fontsize=FONTSIZE)
 
         # loop across sites
         for site in site_sorted:
@@ -319,22 +311,31 @@ def main():
                 # get vendor for current site
                 vendor = df.vendor[site]
                 # plot mean values perlevel (C2, C3, C4, C5)
-                plt.plot([float(key) for key in levels_to_label],
-                            mean_dict[label],
-                            marker=vendor_to_marker[vendor],    # change marker symbol based on vendor
-                            markersize=8,                       # size of marker symbol
-                            alpha=0.5,                          # transparency
-                            label=site)
+                x = [float(key) for key in levels_to_label]    # individual levels - 2,3,4,5
+                y = mean_dict[label]                            # mean values per levels
+                plt.plot(x,
+                         y,
+                         marker=vendor_to_marker[vendor],    # change marker symbol based on vendor
+                         markersize=8,                       # size of marker symbol
+                         alpha=0.5,                          # transparency
+                         label=site)
                 # rename xticks to C2, C3, C4, C5
-                plt.xticks([float(key) for key in levels_to_label], levels_to_label.values())
-                plt.ylabel(metric_to_label[metric],fontsize=FONTSIZE)
+                plt.xticks(x, levels_to_label.values())
+                # add ylabel for every subplot
+                #plt.ylabel(metric_to_label[metric],fontsize=FONTSIZE)
+                # add grid
                 plt.grid(axis='y', linestyle="--")
+                # add title to individual subpolots (i.e., ROI/label)
                 plt.title(roi_to_label[label])
+
         # place legend next to last subplot
-        plt.legend(bbox_to_anchor=(1.5, 1), fontsize=FONTSIZE-5)
+        plt.legend(bbox_to_anchor=(1.1, 1), fontsize=FONTSIZE-5)
         # Move subplots closer to each other
         plt.subplots_adjust(wspace=-0.5)
         plt.tight_layout()
+        # tight layout of whole figure and shift master title up
+        fig.tight_layout()
+        fig.subplots_adjust(top=0.88)
         # save figure
         fname_fig = os.path.join(args.path_results, metric + '.png')
         plt.savefig(fname_fig, dpi=200)
