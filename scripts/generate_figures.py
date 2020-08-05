@@ -184,6 +184,29 @@ def summary_per_vendor(df):
     Compute number of used (so, after exclusion) subjects and sites per vendor.
     :return:
     """
+
+    # compute mean per vendor (GE, Philips, Siemens) for individual ROI/labels perlevel
+    # initialize dict
+    dict_vendor = {}
+    # loop across vendors
+    for vendor in vendor_to_color.keys():
+        # if this is a new vendor, initialize sub-dict
+        dict_vendor[vendor] = {}
+        # loop across levels and ROI (e.g., '5', 'spinal cord'; '4', 'spinal cord'; ...)
+        for label in list(df['mean']['amu'].keys()):
+            # if this is a new label, initialize sub-dict
+            dict_vendor[vendor][label] = {}
+            mean_values = list()
+            # loop across sites for given vendor
+            for site in df[df['vendor'] == vendor]['site']:
+                # collect mean values from all sites for given vendor to one list
+                mean_values.append(float(df['mean'][site][label]))
+            # computer mean from all sites' mean values for given vendor and insert it into dict
+            dict_vendor[vendor][label] = np.mean(mean_values)
+
+    #df_vendor = pd.DataFrame.from_dict(dict_vendor, orient='index')
+
+
     # compute number of subjects pervendor
     print('Number of subjects per vendor:')
 
