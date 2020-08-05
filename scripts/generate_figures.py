@@ -187,16 +187,19 @@ def summary_per_vendor(df):
     # compute number of subjects pervendor
     print('Number of subjects per vendor:')
 
+    # loop across vendors
     for vendor in vendor_to_color.keys():
-
         num_of_sub = 0
+        # loop across sites for given vendor
         for site in df[df['vendor'] == vendor]['site']:
+            # get number of used subjects for given site and add it to num_of_sub variable
             num_of_sub = num_of_sub + len(df[df['vendor'] == vendor]['val'][site]['5', 'spinal cord'])
 
         print('{}: {}'.format(vendor, num_of_sub))
 
     # compute number of sites pervendor
     print('Number of sites per vendor:')
+    # loop across vendors
     for vendor in vendor_to_color.keys():
         print('{}: {}'.format(vendor, sum(df['vendor'] == vendor)))
 
