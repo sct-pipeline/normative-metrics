@@ -204,8 +204,7 @@ def summary_per_vendor(df):
             # computer mean from all sites' mean values for given vendor and insert it into dict
             dict_vendor[vendor][label] = np.mean(mean_values)
 
-    #df_vendor = pd.DataFrame.from_dict(dict_vendor, orient='index')
-
+    df_vendor = pd.DataFrame.from_dict(dict_vendor, orient='index')
 
     # compute number of subjects pervendor
     print('Number of subjects per vendor:')
@@ -225,6 +224,8 @@ def summary_per_vendor(df):
     # loop across vendors
     for vendor in vendor_to_color.keys():
         print('{}: {}'.format(vendor, sum(df['vendor'] == vendor)))
+
+    print(df_vendor.head())
 
 
 def fetch_subject(filename):
