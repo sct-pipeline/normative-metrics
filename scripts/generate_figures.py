@@ -228,6 +228,7 @@ def summary_per_vendor(df):
         print('{}: {}'.format(vendor, sum(df['vendor'] == vendor)))
 
     print(df_vendor.head())
+    return df_vendor
 
 
 def fetch_subject(filename):
@@ -285,7 +286,7 @@ def main():
         os.chdir(os.getcwd())
 
     # fetch perlevel .csv files
-    csv_files = glob.glob('*FA_perlevel.csv')
+    csv_files = glob.glob('*perlevel.csv')
 
     if not csv_files:
         raise RuntimeError("No *.csv files were found in the current directory. You can specify directory with *.csv "
@@ -316,7 +317,11 @@ def main():
         site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
 
         # compute per vendor summary
-        summary_per_vendor(df)
+        df_vendor = summary_per_vendor(df)
+        # and save it as .csv file
+        fname_csv_per_vendor = os.path.join(os.getcwd(), metric) + '_per_vendors.csv'
+        df_vendor.to_csv(fname_csv_per_vendor)
+        logger.info('Created: ' + fname_csv_per_vendor)
 
         # ------------------------------------------------------------------
         # generate figure - level evolution per ROI for individual sites
@@ -369,7 +374,7 @@ def main():
         fig.tight_layout()
         fig.subplots_adjust(top=0.88)
         # save figure
-        fname_fig = os.path.join(args.path_results, metric + '.png')
+        fname_fig = os.path.join(args.path_results, metric + '_per_sites.png')
         plt.savefig(fname_fig, dpi=200)
         logger.info('Created: ' + fname_fig)
 
