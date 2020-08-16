@@ -313,15 +313,17 @@ def main():
         # make it a pandas structure (easier for manipulations)
         df = pd.DataFrame.from_dict(results_dict, orient='index')
 
-        # get individual sites
-        site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
-
+        # ------------------------------------------------------------------
         # compute per vendor summary
+        # ------------------------------------------------------------------
         df_vendor = summary_per_vendor(df)
         # and save it as .csv file
         fname_csv_per_vendor = os.path.join(os.getcwd(), metric) + '_per_vendors.csv'
         df_vendor.to_csv(fname_csv_per_vendor)
         logger.info('Created: ' + fname_csv_per_vendor)
+
+        # get individual sites
+        site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
 
         # ------------------------------------------------------------------
         # generate figure - level evolution per ROI for individual sites
