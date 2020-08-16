@@ -2,14 +2,16 @@
 #
 # Generate figures for individual qMRI metrics
 #
-# Usage:
+# USAGE (run this script in the directory with *csv files, i.e. "results" directory):
+#   python generate_figures.py
+# OR specify directory with csv files using -path-results flag:
 #   python generate_figures.py -path-results ~/spineGeneric-multi-subject_results/results/
 #
 # Optional option:
 #   -path-results - directory with *.csv files
 #
 # Inspired by - https://github.com/sct-pipeline/spine-generic/blob/master/processing/generate_figure.py
-# Authors: Julien Cohen-Adad, Jan Valosek
+# Authors: Jan Valosek, Julien Cohen-Adad
 
 import os
 import argparse
@@ -87,7 +89,7 @@ metric_to_label = {
     'dti_ad': 'Axial diffusivity [$mm^2.s^{-1}$]',
     'dti_rd': 'Radial diffusivity [$mm^2.s^{-1}$]',
     'mtr': 'Magnetization transfer ratio [%]',
-    'mtsat': 'Magnetization transfer saturation [a.u.]',
+    'mtsat': 'Magnetization transfer saturation [%]',
     }
 
 # region-of-interest
@@ -124,7 +126,7 @@ def aggregate_per_site(dict_results, metric):
     if os.path.isfile('data/participants.tsv'):
         participants = pd.read_csv(os.path.join('data/participants.tsv'), sep="\t")
     else:
-        raise FileNotFoundError("File \"participants.tsv\" was not found.")
+        raise FileNotFoundError("File \"participants.tsv\" was not found in {} folder.".format(os.getcwd() + '/data'))
 
     # Fetch specific field for the selected metric
     metric_field = metric_to_field[metric]
@@ -253,7 +255,7 @@ def remove_subject(subject, metric):
 def get_parameters():
     parser = argparse.ArgumentParser(
         description="Generate figures. This script needs to be run within the folder with *.csv "
-                    "files or this folder can be passed usin -path-results flag.",
+                    "files or this folder can be passed using -path-results flag.",
         add_help=True,
         prog=os.path.basename(__file__))
 
@@ -261,7 +263,7 @@ def get_parameters():
         '-path-results',
         required=False,
         metavar='<dir_path>',
-        help="Path to directory with results.")
+        help="Path to directory with results (*.csv files).")
 
     args = parser.parse_args()
     return args
@@ -279,18 +281,18 @@ def main():
             raise FileNotFoundError("Directory '{}' was not found.".format(args.path_results))
     else:
         # Stay in current directory (assume it is results directory)
+        print("-path-results flag has not been set. Assuming current directory as a directory with *csv files.")
         os.chdir(os.getcwd())
 
     # fetch perlevel .csv files
-    csv_files = glob.glob('*perlevel.csv')
+    csv_files = glob.glob('*FA_perlevel.csv')
 
     if not csv_files:
-        raise RuntimeError("No *.csv files were found in current directory. You can specify directory with *.csv files "
-                           " by -path-results flag.")
+        raise RuntimeError("No *.csv files were found in the current directory. You can specify directory with *.csv "
+                           "files by -path-results flag.")
 
     # loop across individual .csv files (i.e., across individual qMRI metrics)
     for csv_file in csv_files:
-        print(csv_file)
 
         # open .csv file and create dict
         logger.info('\nProcessing: ' + csv_file)
