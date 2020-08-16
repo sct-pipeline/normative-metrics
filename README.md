@@ -34,7 +34,7 @@ Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/
 
 - Compute qMRI metrics from various ROI per individual vertebral levels using `extract_normative_metrics.sh` script and save them as *csv files:
 
-`sct_run_batch -jobs -1 -path-data ~/spineGeneric-multi-subject/ -path-output ~/spineGeneric-multi-subject_results/ -include <SUBJECT> scripts/extract_normative_metrics.sh`
+`sct_run_batch -jobs -1 -path-data ~/spineGeneric-multi-subject/ -path-output ~/spineGeneric-multi-subject_results/ -include <SUBJECT> -script scripts/extract_normative_metrics.sh`
 
 - Generate figures
 
