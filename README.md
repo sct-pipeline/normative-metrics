@@ -13,7 +13,7 @@ Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/
 ## Prerequisites
 [Spinal Cord Toolbox (SCT) v4.3](https://github.com/neuropoly/spinalcordtoolbox)
 
-[Spine generic v1.1](https://github.com/sct-pipeline/spine-generic)
+[Spine generic v2.1](https://github.com/sct-pipeline/spine-generic)
 
 ## Pipeline
 - [Download](https://github.com/spine-generic/data-multi-subject#download-zip-package-recommended) multi-center multi-subject data from GitHub webpage using ``curl`` command:
@@ -28,9 +28,9 @@ Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/
 
 `mkdir ~/data-multi-subject-master_results`
 
-- Analyze data using [process_data.sh](https://github.com/spine-generic/spine-generic/blob/master/process_data.sh) script:
+- Analyze multi-subject dataset in parallel mode using [process_data.sh](https://github.com/spine-generic/spine-generic/blob/master/process_data.sh) script:
 
-`sct_run_batch -jobs -1 -path-data ~/data-multi-subject-master -path-output ~/data-multi-subject-master_results/ -continue-on-error 1 -task <PATH_TO_SPINE-GENERIC>/spine-generic/process_data.sh`
+`sct_run_batch -jobs -1 -path-data ~/data-multi-subject-master -path-output ~/data-multi-subject-master_results/ -continue-on-error 1 -script <PATH_TO_SPINE-GENERIC>/spine-generic/process_data.sh`
 
 - Compute qMRI metrics from various ROI per individual vertebral levels using `extract_normative_metrics.sh` script and save them as *csv files:
 
