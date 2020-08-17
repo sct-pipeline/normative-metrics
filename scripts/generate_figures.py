@@ -117,16 +117,16 @@ LABELSIZE = 15
 # TODO - modify this function to save metrics for individual ROI and levels
 def aggregate_per_site(dict_results, metric):
     """
-    Aggregate metrics per site. This function assumes that the file participants.tsv is present in folder ./data/
+    Aggregate metrics per site. This function assumes that the file participants.tsv is present in -path-results folder
     :param dict_results:
     :param metric: Metric type
     :return: results_agg: nested dict with metric values per site
     """
     # Build Panda DF of participants based on participants.tsv file
-    if os.path.isfile('data/participants.tsv'):
-        participants = pd.read_csv(os.path.join('data/participants.tsv'), sep="\t")
+    if os.path.isfile('participants.tsv'):
+        participants = pd.read_csv(os.path.join('participants.tsv'), sep="\t")
     else:
-        raise FileNotFoundError("File \"participants.tsv\" was not found in {} folder.".format(os.getcwd() + '/data'))
+        raise FileNotFoundError("File \"participants.tsv\" was not found in {} folder.".format(os.getcwd()))
 
     # Fetch specific field for the selected metric
     metric_field = metric_to_field[metric]
