@@ -184,7 +184,8 @@ def aggregate_per_site(dict_results, metric):
 def summary_per_vendor(df):
     """
     Compute number of used (so, after exclusion) subjects and sites per vendor.
-    :return:
+    :param df: pandas dataframe with metric values per site
+    :return: df_vendor: pandas dataframe with mean metric values per vendor
     """
 
     # compute mean per vendor (GE, Philips, Siemens) for individual ROI/labels perlevel
