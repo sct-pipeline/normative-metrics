@@ -8,7 +8,8 @@
 #   python generate_figures.py -path-results ~/spineGeneric-multi-subject_results/results/
 #
 # Optional option:
-#   -path-results - directory with *.csv files
+#   -path-results   - directory with *.csv files
+#   -config         - input yml config file with subjects to remove (e.g., due to back data quality)
 #
 # Inspired by - https://github.com/sct-pipeline/spine-generic/blob/master/processing/generate_figure.py
 # Authors: Jan Valosek, Julien Cohen-Adad, Alexandru Foias
