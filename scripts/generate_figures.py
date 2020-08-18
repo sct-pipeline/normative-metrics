@@ -11,7 +11,7 @@
 #   -path-results - directory with *.csv files
 #
 # Inspired by - https://github.com/sct-pipeline/spine-generic/blob/master/processing/generate_figure.py
-# Authors: Jan Valosek, Julien Cohen-Adad
+# Authors: Jan Valosek, Julien Cohen-Adad, Alexandru Foias
 
 import os
 import argparse
@@ -20,6 +20,7 @@ import sys
 import glob
 import csv
 import pandas as pd
+import yaml
 
 import numpy as np
 from collections import defaultdict
@@ -31,20 +32,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)  # default: logging.DEBUG, logging.INFO
 hdlr = logging.StreamHandler(sys.stdout)
 logging.root.addHandler(hdlr)
-
-# List subject to remove, associated with contrast
-# TODO - update this
-SUBJECTS_TO_REMOVE = [
-    #{'subject': 'sub-oxfordFmrib04', 'metric': 'csa_t1'},
-]
-
-# List of sites to exclude based on the metric
-# TODO - update this
-SITES_TO_EXCLUDE = {
-    'mtr': ['stanford',  # Used different TR.
-    ]
-    #         'sapienza']  # TODO: check what's going on with this site
-    }
 
 
 # color to assign to each MRI model for the figure
@@ -115,7 +102,7 @@ TICKSIZE = 10
 LABELSIZE = 15
 
 # TODO - modify this function to save metrics for individual ROI and levels
-def aggregate_per_site(dict_results, metric):
+def aggregate_per_site(dict_results, metric, dict_exclude_subj):
     """
     Aggregate metrics per site. This function assumes that the file participants.tsv is present in -path-results folder
     :param dict_results:
@@ -144,7 +131,7 @@ def aggregate_per_site(dict_results, metric):
         # cluster values per site
         subject = fetch_subject(filename)
         # check if subject needs to be discarded
-        if not remove_subject(subject, metric):
+        if not remove_subject(subject, metric, dict_exclude_subj):
             # Fetch index of row corresponding to subject
             rowIndex = participants[participants['participant_id'] == subject].index
             # Add column "val" with metric value
@@ -176,8 +163,10 @@ def aggregate_per_site(dict_results, metric):
             results_agg[site]['mean'][(vertlevel, label)] = np.mean(results_agg[site]['val'][(vertlevel, label)])
 
         else:
+            # because we iterate across individual lines, same subject can be included more than one time in
+            # subjects_removed list -> use conversion to set in next command
             subjects_removed.append(subject)
-    logger.info("Subjects removed: {}".format(subjects_removed))
+    logger.info("Subjects removed: {}".format(set(subjects_removed)))
 
     return results_agg
 
@@ -242,15 +231,16 @@ def fetch_subject(filename):
     subject = path.split(os.sep)[-2]
     return subject
 
-def remove_subject(subject, metric):
+def remove_subject(subject, metric, dict_exclude_subj):
     """
     Check if subject should be removed
     :param subject:
     :param metric:
+    :param dict_exclude_subj: dictonary with subjects to remove from analysis (due to bad data quality, etc.)
     :return: Bool
     """
-    for subject_to_remove in SUBJECTS_TO_REMOVE:
-        if subject_to_remove['subject'] == subject and subject_to_remove['metric'] == metric:
+    if metric in dict_exclude_subj.keys():
+        if subject in dict_exclude_subj[metric]:
             return True
     return False
 
@@ -266,6 +256,11 @@ def get_parameters():
         required=False,
         metavar='<dir_path>',
         help="Path to directory with results (*.csv files).")
+    parser.add_argument(
+        '-config',
+        required=False,
+        metavar='<fname>',
+        help="Config yaml file listing images that you want to remove from processing.")
 
     args = parser.parse_args()
     return args
@@ -273,6 +268,24 @@ def get_parameters():
 def main():
 
     args = get_parameters()
+
+    # create dict with subjects to exclude if input yml config file is passed
+    if args.config is not None:
+        # check if input yml config file exists
+        if os.path.isfile(args.config):
+            fname_yml = args.config
+        else:
+            raise FileNotFoundError("Input yml config file '{}' was not found.".format(args.config))
+
+        # fetch input yml file as dict
+        with open(fname_yml, 'r') as stream:
+            try:
+                dict_exclude_subj = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+    else:
+        # initialize empty dict if no config yml file is passed
+        dict_exclude_subj = dict()
 
     # change directory to where are .csv files are located
     if args.path_results is not None:
@@ -309,7 +322,7 @@ def main():
         metric = file_to_metric[csv_file_small]
 
         # fetch metric values per site
-        results_dict = aggregate_per_site(dict_results, metric)
+        results_dict = aggregate_per_site(dict_results, metric, dict_exclude_subj)
 
         # make it a pandas structure (easier for manipulations)
         df = pd.DataFrame.from_dict(results_dict, orient='index')
