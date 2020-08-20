@@ -110,11 +110,8 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj):
     :param metric: Metric type
     :return: results_agg: nested dict with metric values per site
     """
-    # Build Panda DF of participants based on participants.tsv file
-    if os.path.isfile('participants.tsv'):
-        participants = pd.read_csv(os.path.join('participants.tsv'), sep="\t")
-    else:
-        raise FileNotFoundError("File \"participants.tsv\" was not found in {} folder.".format(os.getcwd()))
+
+    participants = load_participants()
 
     # Fetch specific field for the selected metric
     metric_field = metric_to_field[metric]
@@ -171,6 +168,26 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj):
 
     return results_agg
 
+# TODO - impelement remove_subject feature into this function
+def aggregate_age_and_sex_per_vendor():
+    """
+    Aggregate age and sex per individual vendors
+    :return: dict_age: dict with list for age for individual subjects per vendor
+    """
+
+    participants = load_participants()
+
+    # Iterate across lines (individual subjects)
+    dict_age = defaultdict(list)
+    for _, sub in participants.iterrows():
+        subject = sub['participant_id']
+        # loop across vendors
+        for vendor in vendor_to_color.keys():
+            if participants.loc[participants['participant_id'] == subject]['manufacturer'].values == vendor:
+                dict_age[vendor].append(participants.loc[participants['participant_id'] == subject]['age'].values)
+
+    return dict_age
+
 def summary_per_vendor(df):
     """
     Compute number of used (so, after exclusion) subjects and sites per vendor.
@@ -226,6 +243,14 @@ def summary_per_vendor(df):
     print(df_vendor.head())
     return df_vendor
 
+def load_participants():
+    # Build Panda DF of participants based on participants.tsv file
+    if os.path.isfile('participants.tsv'):
+        participants = pd.read_csv(os.path.join('participants.tsv'), sep="\t")
+    else:
+        raise FileNotFoundError("File \"participants.tsv\" was not found in {} folder.".format(os.getcwd()))
+
+    return participants
 
 def fetch_subject(filename):
     """
@@ -326,6 +351,8 @@ def main():
         # fetch metric name from .csv file
         _, csv_file_small = os.path.split(csv_file)
         metric = file_to_metric[csv_file_small]
+
+        aggregate_age_and_sex_per_vendor()
 
         # fetch metric values per site
         results_dict = aggregate_per_site(dict_results, metric, dict_exclude_subj)
