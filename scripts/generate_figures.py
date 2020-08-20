@@ -200,8 +200,7 @@ def summary_per_vendor(df):
     df_vendor = pd.DataFrame.from_dict(dict_vendor, orient='index')
 
     # compute number of subjects pervendor
-    print('Number of subjects per vendor:')
-
+    dict_sub_per_vendor = dict()        # e.g.: {'GE': 7, 'Philips': 2, 'Siemens': 9}
     # loop across vendors
     for vendor in vendor_to_color.keys():
         num_of_sub = 0
@@ -209,15 +208,21 @@ def summary_per_vendor(df):
         for site in df[df['vendor'] == vendor]['site']:
             # get number of used subjects for given site and add it to num_of_sub variable
             num_of_sub = num_of_sub + len(df[df['vendor'] == vendor]['val'][site]['5', 'spinal cord'])
-
-        print('{}: {}'.format(vendor, num_of_sub))
+        dict_sub_per_vendor[vendor] = num_of_sub
 
     # compute number of sites pervendor
-    print('Number of sites per vendor:')
+    dict_sites_per_vendor = dict()      # e.g.: {'GE': 2, 'Philips': 1, 'Siemens': 4}
     # loop across vendors
     for vendor in vendor_to_color.keys():
-        print('{}: {}'.format(vendor, sum(df['vendor'] == vendor)))
+        dict_sites_per_vendor[vendor] = sum(df['vendor'] == vendor)
 
+    # convert and concatenate dict_sub_per_vendor and dict_sites_per_vendor to pandas DF
+    df_summary_vendor = pd.concat([pd.DataFrame.from_dict(dict_sub_per_vendor, orient='index'),
+                                   pd.DataFrame.from_dict(dict_sites_per_vendor, orient='index')], axis=1, sort=False)
+    df_summary_vendor.columns = ['num. of sub. per vendor', 'num. of sites per vendor']
+
+    print(df_summary_vendor)
+    print()
     print(df_vendor.head())
     return df_vendor
 
