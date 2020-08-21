@@ -179,14 +179,14 @@ def aggregate_age_and_sex_per_vendor():
     participants = load_participants()
 
     dict_age = defaultdict(list)
-    dict_sex = defaultdict(list)
+    dict_sex = defaultdict(tuple)
     # Loop across subjects grouped by vendors (i.e, 3 groups - GE, Philips, Siemens)
     for vendor, value in participants.groupby('manufacturer'):
         # TODO - deal with '-' values and convert str list into int list
         # Insert age of individual subjects as a list into dict pervendors - possibility to calculate mean, SD, etc.
         dict_age[vendor] = value['age'].values
-        # Insert sex of individual subjects as a list into dict pervendors
-        dict_sex[vendor] = value['sex'].values
+        # Insert number of males and females as a tuple into dict pervendors
+        dict_sex[vendor] = (sum(value['sex'].values == 'M'), sum(value['sex'].values == 'F'))
 
     # Another option without df.groupby with exclusion of subjects
     # # Iterate across lines (individual subjects)
