@@ -173,20 +173,32 @@ def aggregate_age_and_sex_per_vendor():
     """
     Aggregate age and sex per individual vendors
     :return: dict_age: dict with list for age for individual subjects per vendor
+    :return: dict_sex: dict with list for sex for individual subjects per vendor
     """
 
     participants = load_participants()
 
-    # Iterate across lines (individual subjects)
     dict_age = defaultdict(list)
-    for _, sub in participants.iterrows():
-        subject = sub['participant_id']
-        # loop across vendors
-        for vendor in vendor_to_color.keys():
-            if participants.loc[participants['participant_id'] == subject]['manufacturer'].values == vendor:
-                dict_age[vendor].append(participants.loc[participants['participant_id'] == subject]['age'].values)
+    dict_sex = defaultdict(list)
+    # Loop across subjects grouped by vendors (i.e, 3 groups - GE, Philips, Siemens)
+    for vendor, value in participants.groupby('manufacturer'):
+        # TODO - deal with '-' values and convert str list into int list
+        # Insert age of individual subjects as a list into dict pervendors - possibility to calculate mean, SD, etc.
+        dict_age[vendor] = value['age'].values
+        # Insert sex of individual subjects as a list into dict pervendors
+        dict_sex[vendor] = value['sex'].values
 
-    return dict_age
+    # Another option without df.groupby with exclusion of subjects
+    # # Iterate across lines (individual subjects)
+    # dict_age = defaultdict(list)
+    # for _, sub in participants.iterrows():
+    #     subject = sub['participant_id']
+    #     # loop across vendors
+    #     for vendor in vendor_to_color.keys():
+    #         if participants.loc[participants['participant_id'] == subject]['manufacturer'].values == vendor:
+    #             dict_age[vendor].append(participants.loc[participants['participant_id'] == subject]['age'].values)
+
+    return dict_age, dict_sex
 
 def summary_per_vendor(df):
     """
@@ -352,8 +364,6 @@ def main():
         _, csv_file_small = os.path.split(csv_file)
         metric = file_to_metric[csv_file_small]
 
-        aggregate_age_and_sex_per_vendor()
-
         # fetch metric values per site
         results_dict = aggregate_per_site(dict_results, metric, dict_exclude_subj)
 
@@ -368,6 +378,11 @@ def main():
         fname_csv_per_vendor = os.path.join(os.getcwd(), metric) + '_per_vendors.csv'
         df_vendor.to_csv(fname_csv_per_vendor)
         logger.info('Created: ' + fname_csv_per_vendor)
+
+        # ------------------------------------------------------------------
+        # compute age and sex per vendor
+        # ------------------------------------------------------------------
+        dict_age, dict_sex = aggregate_age_and_sex_per_vendor()
 
         # get individual sites
         site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
