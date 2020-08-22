@@ -172,21 +172,28 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj):
 def aggregate_age_and_sex_per_vendor():
     """
     Aggregate age and sex per individual vendors
-    :return: dict_age: dict with list for age for individual subjects per vendor
-    :return: dict_sex: dict with list for sex for individual subjects per vendor
+    :return: df_age: pandas df with age statistics (min, max, mean, std) per vendor
+    :return: df_sex: pandas df with sex (M, F) per vendor
     """
 
     participants = load_participants()
 
-    dict_age = defaultdict(list)
+    # Replace '-' by NaN (some subjects do not have listed age and sex)
+    participants = participants.replace('-', np.nan)
+    # Convert age from str to float to fit with NaN
+    participants['age'] = participants['age'].astype(float)
+    # Aggregate age per vendors
+    df_age = participants.groupby('manufacturer').age.agg(['min', 'max', 'mean', np.std])
+    df_age.columns = ['min age', 'max age', 'mean age', 'std age']
+
     dict_sex = defaultdict(tuple)
     # Loop across subjects grouped by vendors (i.e, 3 groups - GE, Philips, Siemens)
     for vendor, value in participants.groupby('manufacturer'):
-        # TODO - deal with '-' values and convert str list into int list
-        # Insert age of individual subjects as a list into dict pervendors - possibility to calculate mean, SD, etc.
-        dict_age[vendor] = value['age'].values
         # Insert number of males and females as a tuple into dict pervendors
         dict_sex[vendor] = (sum(value['sex'].values == 'M'), sum(value['sex'].values == 'F'))
+
+    # convert dict to pandas df
+    df_sex = pd.DataFrame.from_dict(dict_sex, orient='index', columns=['M', 'F'])
 
     # Another option without df.groupby with exclusion of subjects
     # # Iterate across lines (individual subjects)
@@ -198,13 +205,15 @@ def aggregate_age_and_sex_per_vendor():
     #         if participants.loc[participants['participant_id'] == subject]['manufacturer'].values == vendor:
     #             dict_age[vendor].append(participants.loc[participants['participant_id'] == subject]['age'].values)
 
-    return dict_age, dict_sex
+    return df_age, df_sex
 
 def summary_per_vendor(df):
     """
-    Compute number of used (so, after exclusion) subjects and sites per vendor.
-    :param df: pandas dataframe with metric values per site
-    :return: df_vendor: pandas dataframe with mean metric values per vendor
+    Compute mean values pervendor for individual ROI/labels perlevel and number of used (so, after exclusion) subjects
+    and sites per vendor.
+    :param df: pandas df with metric values per site
+    :return: df_vendor: pandas df with mean metric values per vendor
+    :return: df_summary_vendor: pandas df with number of subjects and sites per vendor
     """
 
     # compute mean per vendor (GE, Philips, Siemens) for individual ROI/labels perlevel
@@ -250,10 +259,7 @@ def summary_per_vendor(df):
                                    pd.DataFrame.from_dict(dict_sites_per_vendor, orient='index')], axis=1, sort=False)
     df_summary_vendor.columns = ['num. of sub. per vendor', 'num. of sites per vendor']
 
-    print(df_summary_vendor)
-    print()
-    print(df_vendor.head())
-    return df_vendor
+    return df_vendor, df_summary_vendor
 
 def load_participants():
     # Build Panda DF of participants based on participants.tsv file
@@ -373,16 +379,23 @@ def main():
         # ------------------------------------------------------------------
         # compute per vendor summary
         # ------------------------------------------------------------------
-        df_vendor = summary_per_vendor(df)
+        df_vendor, df_summary_vendor = summary_per_vendor(df)
         # and save it as .csv file
         fname_csv_per_vendor = os.path.join(os.getcwd(), metric) + '_per_vendors.csv'
         df_vendor.to_csv(fname_csv_per_vendor)
         logger.info('Created: ' + fname_csv_per_vendor)
 
+        print(df_vendor.head())
+
         # ------------------------------------------------------------------
         # compute age and sex per vendor
         # ------------------------------------------------------------------
-        dict_age, dict_sex = aggregate_age_and_sex_per_vendor()
+        df_age, df_sex = aggregate_age_and_sex_per_vendor()
+
+        # Concatenate number of sites and subjects with sex and age pervendor
+        df_summary_vendor = pd.concat([df_summary_vendor, df_age, df_sex], sort=False, axis=1)
+
+        print(df_summary_vendor)
 
         # get individual sites
         site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
