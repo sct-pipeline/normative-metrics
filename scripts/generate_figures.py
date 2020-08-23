@@ -232,7 +232,7 @@ def summary_per_vendor(df):
             for site in df[df['vendor'] == vendor]['site']:
                 # collect mean values from all sites for given vendor to one list
                 mean_values.append(float(df['mean'][site][label]))
-            # computer mean from all sites' mean values for given vendor and insert it into dict
+            # compute mean from all sites' mean values for given vendor and insert it into dict
             dict_vendor[vendor][label] = np.mean(mean_values)
 
     # convert dict to pandas df for easy csv save
@@ -326,6 +326,60 @@ def generate_level_evolution_persite(df, metric, path_output):
     logger.info('Created: ' + fname_fig)
 
     # plt.show()
+
+def generate_level_evolution_pervendor(df_vendor, metric, path_output):
+    """
+    Generate figure for each metric - level evolution (C2, C3, C4, C5) per ROI for individual vendors
+    :param df_vendor: pandas df with aggregated data pervendor
+    :param metric: currently processed qMRI metric (e.g. FA, MD, MTsat,...)
+    :param path_output: path where figures will be generated (manually entered -path-results path or current dir)
+    :return:
+    """
+
+    fig, _ = plt.subplots(figsize=(14, 7))
+    # add master title for whole figure
+    fig.suptitle(metric_to_label[metric], fontsize=FONTSIZE)
+
+    # loop across vendors
+    for vendor, row in df_vendor.iterrows():
+        # loop across roi/labels
+        for index, label in enumerate(roi_to_label.keys()):
+            # create individual subplots
+            ax = plt.subplot(2, 3, index + 1)
+            # loop across levels
+            y = list()
+            for level in levels_to_label.keys():
+                # get value for given label (e.g, C2, C3, etc) and given label/roi (e.g., spinal cord etc.)
+                y.append(row[level,label])
+
+            # plot mean values pervendor for each level (C2, C3, C4, C5)
+            x = [float(key) for key in levels_to_label]  # individual levels - 2,3,4,5
+            plt.plot(x,
+                     y,
+                     marker=vendor_to_marker[vendor],  # change marker symbol based on vendor
+                     markersize=8,  # size of marker symbol
+                     alpha=0.5,  # transparency
+                     label=vendor)
+            # rename xticks to C2, C3, C4, C5
+            plt.xticks(x, levels_to_label.values())
+            # add grid
+            plt.grid(axis='y', linestyle="--")
+            # add title to individual subpolots (i.e., ROI/label)
+            plt.title(roi_to_label[label])
+
+    # place legend next to last subplot
+    plt.legend(bbox_to_anchor=(1.1, 1), fontsize=FONTSIZE - 5)
+    # Move subplots closer to each other
+    plt.subplots_adjust(wspace=-0.5)
+    plt.tight_layout()
+    # tight layout of whole figure and shift master title up
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.88)
+    # save figure
+    fname_fig = os.path.join(path_output, metric + '_per_vendor.png')
+    plt.savefig(fname_fig, dpi=200)
+    logger.info('Created: ' + fname_fig)
+
 
 def load_participants():
     """
@@ -469,12 +523,18 @@ def main():
         print(df_summary_vendor)
 
         # ------------------------------------------------------------------
-        # generate figure - level evolution per ROI for individual sites
+        # generate per VENDORs figure - level evolution per ROI for individual vendors
+        # ------------------------------------------------------------------
+
+        generate_level_evolution_pervendor(df_vendor, metric, path_output)
+
+        # ------------------------------------------------------------------
+        # generate per SITEs figure - level evolution per ROI for individual sites
         # ------------------------------------------------------------------
 
         generate_level_evolution_persite(df, metric, path_output)
 
-        print('done')
+        print('Finished.')
 
 if __name__ == "__main__":
     main()
