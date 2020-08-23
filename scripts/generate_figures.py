@@ -235,6 +235,7 @@ def summary_per_vendor(df):
             # computer mean from all sites' mean values for given vendor and insert it into dict
             dict_vendor[vendor][label] = np.mean(mean_values)
 
+    # convert dict to pandas df for easy csv save
     df_vendor = pd.DataFrame.from_dict(dict_vendor, orient='index')
 
     # compute number of subjects pervendor
@@ -327,7 +328,11 @@ def generate_level_evolution_persite(df, metric, path_output):
     # plt.show()
 
 def load_participants():
-    # Build Panda DF of participants based on participants.tsv file
+    """
+    Build Panda DF of participants based on participants.tsv file (assuming that participants.tsv is located at same
+    directory as input *csv files
+    :return: none
+    """
     if os.path.isfile('participants.tsv'):
         participants = pd.read_csv(os.path.join('participants.tsv'), sep="\t")
     else:
