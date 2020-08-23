@@ -261,6 +261,71 @@ def summary_per_vendor(df):
 
     return df_vendor, df_summary_vendor
 
+def generate_level_evolution_persite(df, metric, path_output):
+    """
+    Generate figure for each metric - level evolution (C2, C3, C4, C5) per ROI for individual sites
+    :param df: pandas df with input data
+    :param metric: currently processed qMRI metric (e.g. FA, MD, MTsat,...)
+    :param path_output: path where figures will be generated (manually entered -path-results path or current dir)
+    :return:
+    """
+    # get individual sites
+    site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
+
+    fig, _ = plt.subplots(figsize=(14, 7))
+    # add master title for whole figure
+    fig.suptitle(metric_to_label[metric], fontsize=FONTSIZE)
+
+    # loop across sites
+    for site in site_sorted:
+        # initialize dict for each loop - {label: mean_metric}
+        mean_dict = dict()
+        # loop across roi/labels
+        for index, label in enumerate(roi_to_label.keys()):
+            # create individual subplots
+            ax = plt.subplot(2, 3, index + 1)
+            mean_value = list()
+            # loop across levels
+            for level in levels_to_label.keys():
+                # append mean metric value across individual subjects within site perlevel (C2,C3,C4,C5)
+                mean_value.append(df['mean'][site][level, label])
+                # fill dict - {label: mean_metric}, e.g. - {'spinal cord': [0.6, 0.6, 0.5, 0.3], 'white matter': [0.6, 0.7, 0.5, 0.4], ...}
+                mean_dict[label] = mean_value
+            # get vendor for current site
+            vendor = df.vendor[site]
+            # plot mean values perlevel (C2, C3, C4, C5)
+            x = [float(key) for key in levels_to_label]  # individual levels - 2,3,4,5
+            y = mean_dict[label]  # mean values per levels
+            plt.plot(x,
+                     y,
+                     marker=vendor_to_marker[vendor],  # change marker symbol based on vendor
+                     markersize=8,  # size of marker symbol
+                     alpha=0.5,  # transparency
+                     label=site)
+            # rename xticks to C2, C3, C4, C5
+            plt.xticks(x, levels_to_label.values())
+            # add ylabel for every subplot
+            # plt.ylabel(metric_to_label[metric],fontsize=FONTSIZE)
+            # add grid
+            plt.grid(axis='y', linestyle="--")
+            # add title to individual subpolots (i.e., ROI/label)
+            plt.title(roi_to_label[label])
+
+    # place legend next to last subplot
+    plt.legend(bbox_to_anchor=(1.1, 1), fontsize=FONTSIZE - 5)
+    # Move subplots closer to each other
+    plt.subplots_adjust(wspace=-0.5)
+    plt.tight_layout()
+    # tight layout of whole figure and shift master title up
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.88)
+    # save figure
+    fname_fig = os.path.join(path_output, metric + '_per_sites.png')
+    plt.savefig(fname_fig, dpi=200)
+    logger.info('Created: ' + fname_fig)
+
+    # plt.show()
+
 def load_participants():
     # Build Panda DF of participants based on participants.tsv file
     if os.path.isfile('participants.tsv'):
@@ -336,17 +401,19 @@ def main():
         # initialize empty dict if no config yml file is passed
         dict_exclude_subj = dict()
 
-    # change directory to where are .csv files are located
+    # change directory to where are .csv files are located (and where figures will be generated)
     if args.path_results is not None:
         if os.path.isdir(args.path_results):
+            path_output = args.path_results
             # Go to results directory defined by user
-            os.chdir(args.path_results)
+            os.chdir(path_output)
         else:
             raise FileNotFoundError("Directory '{}' was not found.".format(args.path_results))
     else:
-        # Stay in current directory (assume it is results directory)
+        # Stay in current directory (assuming it is results directory)
+        path_output = os.getcwd()
         print("-path-results flag has not been set. Assuming current directory as a directory with *csv files.")
-        os.chdir(os.getcwd())
+        os.chdir(path_output)
 
     # fetch perlevel .csv files
     csv_files = glob.glob('*perlevel.csv')
@@ -372,7 +439,6 @@ def main():
 
         # fetch metric values per site
         results_dict = aggregate_per_site(dict_results, metric, dict_exclude_subj)
-
         # make it a pandas structure (easier for manipulations)
         df = pd.DataFrame.from_dict(results_dict, orient='index')
 
@@ -397,65 +463,11 @@ def main():
 
         print(df_summary_vendor)
 
-        # get individual sites
-        site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
-
         # ------------------------------------------------------------------
         # generate figure - level evolution per ROI for individual sites
         # ------------------------------------------------------------------
-        fig, _ = plt.subplots(figsize=(14, 7))
-        # add master title for whole figure
-        fig.suptitle(metric_to_label[metric], fontsize=FONTSIZE)
 
-        # loop across sites
-        for site in site_sorted:
-            # initialize dict for each loop - {label: mean_metric}
-            mean_dict = dict()
-            # loop across roi/labels
-            for index, label in enumerate(roi_to_label.keys()):
-                # create individual subplots
-                ax = plt.subplot(2,3,index+1)
-                mean_value = list()
-                # loop across levels
-                for level in levels_to_label.keys():
-                    # append mean metric value across individual subjects within site perlevel (C2,C3,C4,C5)
-                    mean_value.append(df['mean'][site][level,label])
-                    # fill dict - {label: mean_metric}, e.g. - {'spinal cord': [0.6, 0.6, 0.5, 0.3], 'white matter': [0.6, 0.7, 0.5, 0.4], ...}
-                    mean_dict[label] = mean_value
-                # get vendor for current site
-                vendor = df.vendor[site]
-                # plot mean values perlevel (C2, C3, C4, C5)
-                x = [float(key) for key in levels_to_label]    # individual levels - 2,3,4,5
-                y = mean_dict[label]                            # mean values per levels
-                plt.plot(x,
-                         y,
-                         marker=vendor_to_marker[vendor],    # change marker symbol based on vendor
-                         markersize=8,                       # size of marker symbol
-                         alpha=0.5,                          # transparency
-                         label=site)
-                # rename xticks to C2, C3, C4, C5
-                plt.xticks(x, levels_to_label.values())
-                # add ylabel for every subplot
-                #plt.ylabel(metric_to_label[metric],fontsize=FONTSIZE)
-                # add grid
-                plt.grid(axis='y', linestyle="--")
-                # add title to individual subpolots (i.e., ROI/label)
-                plt.title(roi_to_label[label])
-
-        # place legend next to last subplot
-        plt.legend(bbox_to_anchor=(1.1, 1), fontsize=FONTSIZE-5)
-        # Move subplots closer to each other
-        plt.subplots_adjust(wspace=-0.5)
-        plt.tight_layout()
-        # tight layout of whole figure and shift master title up
-        fig.tight_layout()
-        fig.subplots_adjust(top=0.88)
-        # save figure
-        fname_fig = os.path.join(args.path_results, metric + '_per_sites.png')
-        plt.savefig(fname_fig, dpi=200)
-        logger.info('Created: ' + fname_fig)
-
-        #plt.show()
+        generate_level_evolution_persite(df, metric, path_output)
 
         print('done')
 
