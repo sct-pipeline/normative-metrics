@@ -335,10 +335,11 @@ def generate_level_evolution_persite(df, metric, path_output):
 
     # plt.show()
 
-def generate_level_evolution_pervendor(df_vendor, metric, path_output):
+def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, path_output):
     """
     Generate figure for each metric - level evolution (C2, C3, C4, C5) per ROI for individual vendors
     :param df_vendor: pandas df with aggregated data pervendor
+    :param df_summary_vendor: pandas df with number of subjects and sites per vendor
     :param metric: currently processed qMRI metric (e.g. FA, MD, MTsat,...)
     :param path_output: path where figures will be generated (manually entered -path-results path or current dir)
     :return:
@@ -381,7 +382,14 @@ def generate_level_evolution_pervendor(df_vendor, metric, path_output):
             plt.title(roi_to_label[label])
 
     # place legend next to last subplot
-    plt.legend(bbox_to_anchor=(1.1, 1), fontsize=FONTSIZE - 5)
+    leg = plt.legend(bbox_to_anchor=(1.1, 1), fontsize=FONTSIZE - 5)
+    # insert number of subjects and number of sites per vendor into legend
+    # loop across vendors
+    for num in range(0,len(leg.get_texts())):
+        leg.get_texts()[num].set_text('{}: {} subjects, {} sites'.
+                                    format(df_summary_vendor.index.values[num], df_summary_vendor.iloc[num, 0],
+                                           df_summary_vendor.iloc[num, 1]))
+
     # Move subplots closer to each other
     plt.subplots_adjust(wspace=-0.5)
     plt.tight_layout()
@@ -541,7 +549,7 @@ def main():
 
         # concatenate mean and std values
         df_vendor = pd.concat([df_vendor_mean, df_vendor_std], axis=1)
-        generate_level_evolution_pervendor(df_vendor, metric, path_output)
+        generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, path_output)
 
         # ------------------------------------------------------------------
         # generate per SITEs figure - level evolution per ROI for individual sites
