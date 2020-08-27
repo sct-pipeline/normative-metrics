@@ -16,21 +16,15 @@ Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/
 [Spine generic v2.1](https://github.com/sct-pipeline/spine-generic)
 
 ## Pipeline
-- [Download](https://github.com/spine-generic/data-multi-subject#download-zip-package-recommended) multi-center multi-subject data from GitHub webpage using ``curl`` command:
-
-`curl -o spinegeneric.zip -L https://github.com/spine-generic/data-multi-subject/archive/master.zip`
-
-- Unzip downloaded data:
-
-`unzip spinegeneric.zip`
+- [Download](https://github.com/spine-generic/data-multi-subject#download) multi-center multi-subject data from GitHub webpage using ``git annex``.
 
 - Create a folder where results will be generated:
 
-`mkdir ~/data-multi-subject-master_results`
+`mkdir ~/data-multi-subject_results`
 
 - Analyze multi-subject dataset in parallel mode using [process_data.sh](https://github.com/spine-generic/spine-generic/blob/master/process_data.sh) script:
 
-`sct_run_batch -jobs -1 -path-data ~/data-multi-subject-master -path-output ~/data-multi-subject-master_results/ -continue-on-error 1 -script <PATH_TO_SPINE-GENERIC>/spine-generic/process_data.sh`
+`sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script <PATH_TO_SPINE-GENERIC>/spine-generic/process_data.sh`
 
 - Compute qMRI metrics from various ROI per individual vertebral levels using `extract_normative_metrics.sh` script and save them as *csv files:
 
