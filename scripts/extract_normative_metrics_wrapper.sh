@@ -6,4 +6,7 @@
 SUBJECT=$1
 PATH_DATA=$(echo $PATH_RESULTS | sed 's|\(.*\)/.*|\1|')		# delete "/results" from the end of PATH_RESULTS variable
 
+echo $SUBJECT
+echo $PATH_DATA
+
 python extract_normative_metrics.py -sub ${SUBJECT} -path-data ${PATH_DATA}
