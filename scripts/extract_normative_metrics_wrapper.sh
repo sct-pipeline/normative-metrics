@@ -10,4 +10,6 @@
 SUBJECT=$1
 PATH_DATA=$(echo $PATH_RESULTS | sed 's|\(.*\)/.*|\1|')		# delete "/results" from the end of PATH_RESULTS variable
 
-python /usr/local/normative-metrics/scripts/extract_normative_metrics.py -sub ${SUBJECT} -path-data ${PATH_DATA}
+# TODO - implement passing of input yml file with labels/ROIs to process
+# following command expect that this script is called from normative-metrics repo
+python scripts/extract_normative_metrics.py -sub ${SUBJECT} -path-data ${PATH_DATA}

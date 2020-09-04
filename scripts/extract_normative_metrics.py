@@ -13,8 +13,10 @@
 #
 # (you can run the script only on some subjects, using -include flag, see sct_run_batch -h)
 #
-# - single subject mode:
+# - single subject mode with default labels/ROIs:
 #       extract_normative_metrics.py -path-data ~/data-multi-subject_results -sub sub-amu01
+# - single subject mode with labels/ROIs defined by yml file:
+#       extract_normative_metrics.py -path-data ~/data-multi-subject_results -sub sub-amu01 -config labels_to_process.yml
 #
 # Authors: Jan Valosek, Julien Cohen-Adad
 # -------------------------------------------------------
