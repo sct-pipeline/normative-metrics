@@ -1,5 +1,19 @@
 #!/usr/bin/env python
 
+# -------------------------------------------------------
+# Extract qMRI metrics (FA, MD, AD, RD, MTR, MTsat) from
+# individual ROI perlevel between C2 and C5
+#
+# USAGE:
+# - parallel mode across multiple subjects (using SCT function sct_run_batch and extract_normative_metrics.sh wrapper):
+#	    sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results -continue-on-error 1 -script scripts/extract_normative_metrics.sh
+#
+# (you can run the script only on some subjects, using -include flag)
+#
+# - single subject mode:
+#       extract_normative_metrics.py -path-data ~/data-multi-subject_results -sub sub-amu01
+# -------------------------------------------------------
+
 import os
 import argparse
 import yaml
