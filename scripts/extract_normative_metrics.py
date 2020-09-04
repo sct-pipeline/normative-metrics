@@ -5,8 +5,8 @@
 # individual ROI perlevel between C2 and C5
 #
 # USAGE:
-# - parallel mode across multiple subjects (using SCT function sct_run_batch and extract_normative_metrics.sh wrapper):
-#	    sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results -continue-on-error 1 -script scripts/extract_normative_metrics.sh
+# - parallel mode across multiple subjects (using SCT function sct_run_batch and extract_normative_metrics_wrapper.sh wrapper):
+#	    sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results -continue-on-error 1 -script scripts/extract_normative_metrics_wrapper.sh
 #
 # (you can run the script only on some subjects, using -include flag)
 #
@@ -58,15 +58,16 @@ def get_parameters():
 
 def main():
 
+    # fetch input arguments
     args = get_parameters()
 
-    # create dict with subjects to exclude if input yml config file is passed
+    # create dict with labels/ROIs to process based on input yml file
     if args.config is not None:
         # check if input yml config file exists
         if os.path.isfile(args.config):
             fname_yml = args.config
         else:
-            raise FileNotFoundError("Input yml config file '{}' was not found.".format(args.config))
+            raise FileNotFoundError("Input yml file '{}' was not found.".format(args.config))
 
         # fetch input yml file as dict
         with open(fname_yml, 'r') as stream:
@@ -78,6 +79,7 @@ def main():
         # if no input yml file with labels/ROIs to process is passed, then, use the default labels/ROIs
         print("No input yml file with labels/ROIs to processed was passed. Continuing with default labels/ROI:")
         labels_to_process = default_labels_to_process
+        print("(ID, name)")
         for key, value in labels_to_process.items():
             print('{}: {}'.format(key, value))
 
