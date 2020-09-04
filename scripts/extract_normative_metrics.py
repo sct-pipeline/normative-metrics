@@ -24,6 +24,7 @@
 import os
 import argparse
 import yaml
+import re
 
 # dict with qMRI metrics to process - metric: dir_location
 metrics_to_process = {
@@ -112,8 +113,11 @@ def main():
 
     print("Processing subject: {}".format(subject_path))
 
-    # list of labels/ROIs IDs to process
-    labels_to_process_list = list(labels_to_process.keys())
+    # string containing labels/ROIs IDs to process (required in this format by sct_extract_metric fucntion)
+    # create str from dict keys
+    labels_to_process_str = ' '.join([str(label) for label in labels_to_process.keys()])
+    # replace spaces by commas (,)
+    labels_to_process_str = re.sub(" ", ",", labels_to_process_str.strip())
 
 
     # Extract qMRI metrics perlevel
@@ -127,13 +131,13 @@ def main():
             # name of output csv file where perlevel values will be saved
             csv_fname = os.path.join(results_path, 'DWI_' + metric + '_perlevel.csv')
             # create command
-            command = 'sct_extract_metric -i ' + metric_fname + ' -f ' + atlas_path + ' -l ' + labels_to_process_list \
-                      + ' -vert 2:5 ' + ' -perlevel 1 ' + ' -o ' + csv_fname + '-append 1'
+            command = 'sct_extract_metric -i ' + metric_fname + ' -f ' + atlas_path + ' -l ' + labels_to_process_str \
+                      + ' -vert 2:5 ' + ' -perlevel 1 ' + ' -o ' + csv_fname + ' -append 1'
 
         # mt metrics (MTR, MTsat)
         if folder == 'anat':
             # nifti metric file
-            metric_fname = os.path.join(subject_path, folder, metric.lower)
+            metric_fname = os.path.join(subject_path, folder, metric.lower() + 'nii.gz')
             # path to atlas
             atlas_path = os.path.join(subject_path, folder, 'label_axT1w', 'atlas')
             # path to vertfile
@@ -141,9 +145,9 @@ def main():
             # name of output csv file where perlevel values will be saved
             csv_fname = os.path.join(results_path, metric + '_perlevel.csv')
             # create command
-            command = 'sct_extract_metric -i ' + metric_fname + ' -f ' + atlas_path + ' -l ' + labels_to_process_list \
+            command = 'sct_extract_metric -i ' + metric_fname + ' -f ' + atlas_path + ' -l ' + labels_to_process_str \
                       + ' -vert 2:5 ' + ' -vertfile ' + vertfile_fname + ' -perlevel 1 ' + ' -o ' + csv_fname \
-                      + '-append 1'
+                      + ' -append 1'
 
         # run shell command
         if os.path.isfile(metric_fname):
