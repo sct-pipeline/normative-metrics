@@ -8,13 +8,15 @@
 # in results/perlevel directory
 #
 # USAGE:
-# - parallel mode across multiple subjects (using SCT function sct_run_batch and extract_normative_metrics_wrapper.sh wrapper):
+# - parallel mode across multiple subjects (using SCT sct_run_batch function and extract_normative_metrics_wrapper.sh wrapper):
 #	    sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results -continue-on-error 1 -script scripts/extract_normative_metrics_wrapper.sh
 #
-# (you can run the script only on some subjects, using -include flag)
+# (you can run the script only on some subjects, using -include flag, see sct_run_batch -h)
 #
 # - single subject mode:
 #       extract_normative_metrics.py -path-data ~/data-multi-subject_results -sub sub-amu01
+#
+# Authors: Jan Valosek, Julien Cohen-Adad
 # -------------------------------------------------------
 
 import os
@@ -122,7 +124,11 @@ def main():
             atlas_path = os.path.join(subject_path, folder, 'label', 'atlas')
             # name of output csv file where perlevel values will be saved
             csv_fname = os.path.join(results_path, 'DWI_' + metric + '_perlevel.csv')
-            #sct_extract_metric -i metric_fname -f atlas_path -l labels_to_process_list -vert 2:5 -perlevel 1 -o csv_fname -append 1
+            # create command
+            command = 'sct_extract_metric -i ' + metric_fname + ' -f ' + atlas_path + ' -l ' + labels_to_process_list \
+                      + ' -vert 2:5 ' + ' -perlevel 1 ' + ' -o ' + csv_fname + '-append 1'
+
+        # mt metrics (MTR, MTsat)
         if folder == 'anat':
             # nifti metric file
             metric_fname = os.path.join(subject_path, folder, metric.lower)
@@ -132,7 +138,17 @@ def main():
             vertfile_fname = os.path.join(subject_path, folder, 'label_axT1w', 'template', 'PAM50_levels.nii.gz')
             # name of output csv file where perlevel values will be saved
             csv_fname = os.path.join(results_path, metric + '_perlevel.csv')
-            #sct_extract_metric -i metric_fname -f atlas_path -l labels_to_process_list -vert 2:5 -vertfile vertfile_fname -perlevel 1 -o csv_fname -append 1
+            # create command
+            command = 'sct_extract_metric -i ' + metric_fname + ' -f ' + atlas_path + ' -l ' + labels_to_process_list \
+                      + ' -vert 2:5 ' + ' -vertfile ' + vertfile_fname + ' -perlevel 1 ' + ' -o ' + csv_fname \
+                      + '-append 1'
+
+        # run shell command
+        if os.path.isfile(metric_fname):
+            os.system(command)
+        else:
+            raise FileNotFoundError("Metric file {} does not exist.".format(metric_fname))
+
 
 if __name__ == "__main__":
     main()
