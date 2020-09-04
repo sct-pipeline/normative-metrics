@@ -1,5 +1,5 @@
-# This file list labels/ROIs to process with extract_normative_metrics.py script
-# Uncomment (delete # sign) for labels/ROI you would like to process
+# This file lists labels/ROIs to process with extract_normative_metrics.py script
+# Uncomment (delete # sign) for labels/ROIs you would like to process
 
 # List of labels based on /usr/local/sct/data/PAM50/atlas/info_label.txt
 
