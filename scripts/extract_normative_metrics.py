@@ -22,9 +22,21 @@
 # -------------------------------------------------------
 
 import os
+import sys
 import argparse
 import yaml
 import re
+import logging
+
+
+# Initialize logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)  # default: logging.DEBUG, logging.INFO
+hdlr = logging.StreamHandler(sys.stdout)
+logging.root.addHandler(hdlr)
+
+# If some nii file will be missing (e.g. dti_FA.nii.gz), this info will be stored to log
+FNAME_LOG = 'error_extract_normative_metrics.txt'
 
 # dict with qMRI metrics to process - metric: dir_location
 metrics_to_process = {
@@ -79,6 +91,9 @@ def main():
     # fetch input arguments
     args = get_parameters()
 
+
+
+
     # create dict with labels/ROIs to process based on input yml file
     if args.config is not None:
         # check if input yml config file exists
@@ -119,6 +134,12 @@ def main():
     # replace spaces by commas (,)
     labels_to_process_str = re.sub(" ", ",", labels_to_process_str.strip())
 
+    # Dump log file there
+    if os.path.exists(os.path.join(results_path, FNAME_LOG)):
+        os.remove(os.path.join(results_path, FNAME_LOG))
+    fh = logging.FileHandler(os.path.join(results_path, FNAME_LOG))
+    logging.root.addHandler(fh)
+
 
     # Extract qMRI metrics perlevel
     for metric, folder in metrics_to_process.items():       # loop across metrics
@@ -157,7 +178,8 @@ def main():
         if os.path.isfile(metric_fname):
             os.system(command)
         else:
-            raise FileNotFoundError("Metric file {} does not exist.".format(metric_fname))
+            logger.info("Metric nii file {} for {} (in {}) does not exist.".format(metric_fname, args.sub,
+                                                                                   os.path.join(subject_path, folder)))
 
 
 if __name__ == "__main__":
