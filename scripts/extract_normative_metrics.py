@@ -124,10 +124,12 @@ def main():
     for metric, folder in metrics_to_process.items():       # loop across metrics
         # dwi metrics (FA, MD, AD, RD)
         if folder == 'dwi':
+            # go to subject folder
+            os.chdir(os.path.join(subject_path, folder))
             # nifti metric file
-            metric_fname = os.path.join(subject_path, folder, 'dti_' + metric + 'nii.gz')
+            metric_fname = 'dti_' + metric + '.nii.gz'
             # path to atlas
-            atlas_path = os.path.join(subject_path, folder, 'label', 'atlas')
+            atlas_path = os.path.join('label', 'atlas')
             # name of output csv file where perlevel values will be saved
             csv_fname = os.path.join(results_path, 'DWI_' + metric + '_perlevel.csv')
             # create command
@@ -136,12 +138,14 @@ def main():
 
         # mt metrics (MTR, MTsat)
         if folder == 'anat':
+            # go to subject folder
+            os.chdir(os.path.join(subject_path, folder))
             # nifti metric file
-            metric_fname = os.path.join(subject_path, folder, metric.lower() + 'nii.gz')
+            metric_fname = metric.lower() + '.nii.gz'
             # path to atlas
-            atlas_path = os.path.join(subject_path, folder, 'label_axT1w', 'atlas')
+            atlas_path = os.path.join('label_axT1w', 'atlas')
             # path to vertfile
-            vertfile_fname = os.path.join(subject_path, folder, 'label_axT1w', 'template', 'PAM50_levels.nii.gz')
+            vertfile_fname = os.path.join('label_axT1w', 'template', 'PAM50_levels.nii.gz')
             # name of output csv file where perlevel values will be saved
             csv_fname = os.path.join(results_path, metric + '_perlevel.csv')
             # create command
