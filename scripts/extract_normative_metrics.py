@@ -38,6 +38,9 @@ logging.root.addHandler(hdlr)
 # If some nii file will be missing (e.g. dti_FA.nii.gz), this info will be stored to log
 FNAME_LOG = 'error_extract_normative_metrics.txt'
 
+# Method to extract metrics {ml,map,wa,bin,max} - for details run sct_extract_metric -h
+extract_method = 'map'
+
 # dict with qMRI metrics to process - metric: dir_location
 metrics_to_process = {
     'FA': 'dwi',
@@ -90,9 +93,6 @@ def main():
 
     # fetch input arguments
     args = get_parameters()
-
-
-
 
     # create dict with labels/ROIs to process based on input yml file
     if args.config is not None:
@@ -155,7 +155,7 @@ def main():
             csv_fname = os.path.join(results_path, 'DWI_' + metric + '_perlevel.csv')
             # create command
             command = 'sct_extract_metric -i ' + metric_fname + ' -f ' + atlas_path + ' -l ' + labels_to_process_str \
-                      + ' -vert 2:5 ' + ' -perlevel 1 ' + ' -o ' + csv_fname + ' -append 1'
+                      + ' -vert 2:5 ' + ' -perlevel 1 ' + ' -method ' + extract_method + ' -o ' + csv_fname + ' -append 1'
 
         # mt metrics (MTR, MTsat)
         if folder == 'anat':
@@ -171,8 +171,8 @@ def main():
             csv_fname = os.path.join(results_path, metric + '_perlevel.csv')
             # create command
             command = 'sct_extract_metric -i ' + metric_fname + ' -f ' + atlas_path + ' -l ' + labels_to_process_str \
-                      + ' -vert 2:5 ' + ' -vertfile ' + vertfile_fname + ' -perlevel 1 ' + ' -o ' + csv_fname \
-                      + ' -append 1'
+                      + ' -vert 2:5 ' + ' -vertfile ' + vertfile_fname + ' -perlevel 1 ' + ' -method ' + \
+                      extract_method + ' -o ' + csv_fname + ' -append 1'
 
         # run shell command
         if os.path.isfile(metric_fname):
