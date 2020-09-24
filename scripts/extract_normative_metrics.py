@@ -2,7 +2,8 @@
 
 # -------------------------------------------------------
 # Extract qMRI metrics (FA, MD, AD, RD, MTR, MTsat) from
-# individual ROI perlevel between C2 and C5
+# individual ROIs/labels perlevel between C2 and C5
+# ROIs/labels to process can be specified by input yml file
 #
 # Extracted metrics will be saved as *perlevel.csv files
 # in results/perlevel directory
@@ -10,6 +11,8 @@
 # USAGE:
 # - parallel mode across multiple subjects (using SCT sct_run_batch function and extract_normative_metrics_wrapper.sh wrapper):
 #	    sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results -continue-on-error 1 -script scripts/extract_normative_metrics_wrapper.sh
+# - same as above, but with yml file containing labels to process(passed by -script-args option):
+#	    sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results -continue-on-error 1 -script-args "-yml-file scripts/labels_to_process.yml" -script scripts/extract_normative_metrics_wrapper.sh
 #
 # (you can run the script only on some subjects, using -include flag, see sct_run_batch -h)
 #
