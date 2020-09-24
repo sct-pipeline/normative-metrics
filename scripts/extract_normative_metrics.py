@@ -105,7 +105,7 @@ def main():
         # fetch input yml file as dict
         with open(fname_yml, 'r') as stream:
             try:
-                dict_exclude_subj = yaml.safe_load(stream)
+                labels_to_process = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 print(exc)
     else:
