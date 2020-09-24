@@ -16,7 +16,7 @@
 # - single subject mode with default labels/ROIs:
 #       extract_normative_metrics.py -path-data ~/data-multi-subject_results -sub sub-amu01
 # - single subject mode with labels/ROIs defined by yml file:
-#       extract_normative_metrics.py -path-data ~/data-multi-subject_results -sub sub-amu01 -config labels_to_process.yml
+#       extract_normative_metrics.py -path-data ~/data-multi-subject_results -sub sub-amu01 -yml-file labels_to_process.yml
 #
 # Authors: Jan Valosek, Julien Cohen-Adad
 # -------------------------------------------------------
@@ -80,10 +80,10 @@ def get_parameters():
         help="Path to directory with processed data."
     )
     parser.add_argument(
-        '-config',
+        '-yml-file',
         required=False,
         metavar='<fname>',
-        help="Config yaml file listing ROIs/labels to process.")
+        help="Yaml file listing ROIs/labels to process.")
     #TODO - add example of yaml file
 
     args = parser.parse_args()
@@ -95,12 +95,12 @@ def main():
     args = get_parameters()
 
     # create dict with labels/ROIs to process based on input yml file
-    if args.config is not None:
-        # check if input yml config file exists
-        if os.path.isfile(args.config):
-            fname_yml = args.config
+    if args.yml_file is not None:
+        # check if input yml file exists
+        if os.path.isfile(args.yml_file):
+            fname_yml = args.yml_file
         else:
-            raise FileNotFoundError("Input yml file '{}' was not found.".format(args.config))
+            raise FileNotFoundError("Input yml file '{}' was not found.".format(args.yml_file))
 
         # fetch input yml file as dict
         with open(fname_yml, 'r') as stream:
