@@ -16,7 +16,9 @@ Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/
 [Spine generic v2.1](https://github.com/sct-pipeline/spine-generic)
 
 ## Pipeline
-- [Download](https://github.com/spine-generic/data-multi-subject#download) multi-center multi-subject data from GitHub webpage using ``git annex``.
+- [Download](https://github.com/spine-generic/data-multi-subject#download) multi-center multi-subject data from GitHub webpage using ``git annex``:
+
+`git clone https://github.com/spine-generic/data-multi-subject && cd data-multi-subject && git annex init && git annex get`
 
 - Create a folder where results will be generated:
 
