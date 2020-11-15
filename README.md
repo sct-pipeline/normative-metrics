@@ -54,7 +54,7 @@ sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-mult
 - Compute qMRI metrics from various ROI per individual vertebral levels across all subjects using `extract_normative_metrics.sh` script (individual \*perlevel.csv files will be stored in `/results` folder):
 
 ```
-sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script scripts/extract_normative_metrics.sh
+sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script scripts/extract_normative_metrics_wrapper.sh
 ```
 
 (You can run the script only for specific subjects using `-include <SUBJECT>` flag)
