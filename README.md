@@ -35,22 +35,32 @@ conda activate venv_sct
 ## Pipeline
 - [Download](https://github.com/spine-generic/data-multi-subject#download) multi-center multi-subject data from GitHub webpage using ``git annex``:
 
-`git clone https://github.com/spine-generic/data-multi-subject && cd data-multi-subject && git annex init && git annex get`
+```
+git clone https://github.com/spine-generic/data-multi-subject && cd data-multi-subject && git annex init && git annex get
+```
 
 - Create a folder where results will be generated:
 
-`mkdir ~/data-multi-subject_results`
+```
+mkdir ~/data-multi-subject_results
+```
 
 - Analyze multi-subject dataset in parallel mode using [process_data.sh](https://github.com/spine-generic/spine-generic/blob/master/process_data.sh) script:
 
-`sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script <PATH_TO_SPINE-GENERIC>/spine-generic/process_data.sh`
+```
+sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script <PATH_TO_SPINE-GENERIC>/spine-generic/process_data.sh
+```
 
 - Compute qMRI metrics from various ROI per individual vertebral levels across all subjects using `extract_normative_metrics.sh` script (individual \*perlevel.csv files will be stored in `/results` folder):
 
-`sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script scripts/extract_normative_metrics.sh`
+```
+sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script scripts/extract_normative_metrics.sh
+```
 
 (You can run the script only for specific subjects using `-include <SUBJECT>` flag)
 
 - Generate figures
 
-`python generate_figures.py -path-results ~/data-multi-subject-master_results/results/`
+```
+python generate_figures.py -path-results ~/data-multi-subject-master_results/results/
+```
