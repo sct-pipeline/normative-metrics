@@ -18,7 +18,7 @@ INPUT_YML=$3
 
 # Run without yml file
 if [[ ${INPUT_YML} == "" ]];then
-	  # following command expect that this script is called from normative-metrics repo
+	  # following command expects that this script is called from normative-metrics repo
 	  python scripts/extract_normative_metrics.py -sub ${SUBJECT} -path-data ${PATH_DATA}
 # Run with passed yml file
 else
