@@ -15,6 +15,23 @@ Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/
 
 [Spine generic v2.1](https://github.com/sct-pipeline/spine-generic)
 
+## Requirements
+
+pandas
+
+pyyaml
+
+matplotlib
+
+numpy
+
+(All these packages are included in SCT virtual env (`venv_sct`), activate it:
+
+```
+source ${SCT_DIR}/python/etc/profile.d/conda.sh
+conda activate venv_sct
+```
+
 ## Pipeline
 - [Download](https://github.com/spine-generic/data-multi-subject#download) multi-center multi-subject data from GitHub webpage using ``git annex``:
 
