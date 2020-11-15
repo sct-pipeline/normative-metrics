@@ -51,13 +51,15 @@ mkdir ~/data-multi-subject_results
 sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script <PATH_TO_SPINE-GENERIC>/spine-generic/process_data.sh
 ```
 
-- Compute qMRI metrics from various ROI per individual vertebral levels across all subjects using `extract_normative_metrics.sh` script (individual \*perlevel.csv files will be stored in `/results` folder):
+- Compute qMRI metrics from various ROI per individual vertebral levels across all subjects using `extract_normative_metrics_wrapper.sh` script :
 
 ```
 sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script scripts/extract_normative_metrics_wrapper.sh
 ```
 
 (You can run the script only for specific subjects using `-include <SUBJECT>` flag)
+
+(Individual \*perlevel.csv files will be stored in `/results/perlevel` folder)
 
 - Generate figures
 
