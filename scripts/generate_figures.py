@@ -103,15 +103,16 @@ TICKSIZE = 10
 LABELSIZE = 15
 
 # TODO - modify this function to save metrics for individual ROI and levels
-def aggregate_per_site(dict_results, metric, dict_exclude_subj):
+def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participants):
     """
     Aggregate metrics per site. This function assumes that the file participants.tsv is present in -path-results folder
     :param dict_results:
     :param metric: Metric type
+    :param path_participants: path to participants.tsv file
     :return: results_agg: nested dict with metric values per site
     """
 
-    participants = load_participants()
+    participants_df = load_participants_file(path_participants)
 
     # Fetch specific field for the selected metric
     metric_field = metric_to_field[metric]
@@ -131,17 +132,17 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj):
         # check if subject needs to be discarded
         if not remove_subject(subject, metric, dict_exclude_subj):
             # Fetch index of row corresponding to subject
-            rowIndex = participants[participants['participant_id'] == subject].index
+            rowIndex = participants_df[participants_df['participant_id'] == subject].index
             # Add column "val" with metric value
-            participants.loc[rowIndex, 'val'] = dict_results[i][metric_field]
-            site = participants['institution_id'][rowIndex].array[0]
+            participants_df.loc[rowIndex, 'val'] = dict_results[i][metric_field]
+            site = participants_df['institution_id'][rowIndex].array[0]
             if not site in results_agg.keys():
                 # if this is a new site, initialize sub-dict
                 results_agg[site] = {}
                 results_agg[site][
                     'site'] = site  # need to duplicate in order to be able to sort using vendor AND site with Pandas
-                results_agg[site]['vendor'] = participants['manufacturer'][rowIndex].array[0]
-                results_agg[site]['model'] = participants['manufacturers_model_name'][rowIndex].array[0]
+                results_agg[site]['vendor'] = participants_df['manufacturer'][rowIndex].array[0]
+                results_agg[site]['model'] = participants_df['manufacturers_model_name'][rowIndex].array[0]
                 # initialize empty sub-dict for metric values with values as list
                 # metrics for individual subjects within site
                 results_agg[site]['val'] = defaultdict(list)
@@ -169,26 +170,27 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj):
     return results_agg
 
 # TODO - impelement remove_subject feature into this function
-def aggregate_age_and_sex_per_vendor():
+def aggregate_age_and_sex_per_vendor(path_participants):
     """
     Aggregate age and sex per individual vendors
+    :param path_participants: path to participants.tsv file
     :return: df_age: pandas df with age statistics (min, max, mean, std) per vendor
     :return: df_sex: pandas df with sex (M, F) per vendor
     """
 
-    participants = load_participants()
+    participants_df = load_participants_file(path_participants)
 
     # Replace '-' by NaN (some subjects do not have listed age and sex)
-    participants = participants.replace('-', np.nan)
+    participants_df = participants_df.replace('-', np.nan)
     # Convert age from str to float to fit with NaN
-    participants['age'] = participants['age'].astype(float)
+    participants_df['age'] = participants_df['age'].astype(float)
     # Aggregate age per vendors
-    df_age = participants.groupby('manufacturer').age.agg(['min', 'max', 'mean', np.std])
+    df_age = participants_df.groupby('manufacturer').age.agg(['min', 'max', 'mean', np.std])
     df_age.columns = ['min age', 'max age', 'mean age', 'std age']
 
     dict_sex = defaultdict(tuple)
     # Loop across subjects grouped by vendors (i.e, 3 groups - GE, Philips, Siemens)
-    for vendor, value in participants.groupby('manufacturer'):
+    for vendor, value in participants_df.groupby('manufacturer'):
         # Insert number of males and females as a tuple into dict pervendors
         dict_sex[vendor] = (sum(value['sex'].values == 'M'), sum(value['sex'].values == 'F'))
 
@@ -198,12 +200,12 @@ def aggregate_age_and_sex_per_vendor():
     # Another option without df.groupby with exclusion of subjects
     # # Iterate across lines (individual subjects)
     # dict_age = defaultdict(list)
-    # for _, sub in participants.iterrows():
+    # for _, sub in participants_df.iterrows():
     #     subject = sub['participant_id']
     #     # loop across vendors
     #     for vendor in vendor_to_color.keys():
-    #         if participants.loc[participants['participant_id'] == subject]['manufacturer'].values == vendor:
-    #             dict_age[vendor].append(participants.loc[participants['participant_id'] == subject]['age'].values)
+    #         if participants_df.loc[participants_df['participant_id'] == subject]['manufacturer'].values == vendor:
+    #             dict_age[vendor].append(participants_df.loc[participants_df['participant_id'] == subject]['age'].values)
 
     return df_age, df_sex
 
@@ -402,18 +404,19 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     logger.info('Created: ' + fname_fig)
 
 
-def load_participants():
+def load_participants_file(path_participants):
     """
-    Build Panda DF of participants based on participants.tsv file (assuming that participants.tsv is located at same
-    directory as input *csv files
-    :return: none
+    Build Pandas DF of participants with their characteristics (age, sex, ...) based on participants.tsv file
+    :param path_participants: path to participants.tsv file
+    :return participants_df: pandas df
     """
-    if os.path.isfile('participants.tsv'):
-        participants = pd.read_csv(os.path.join('participants.tsv'), sep="\t")
+    if os.path.isfile(path_participants):
+        participants_df = pd.read_csv(path_participants, sep="\t")
     else:
-        raise FileNotFoundError("File \"participants.tsv\" was not found in {} folder.".format(os.getcwd()))
+        raise FileNotFoundError("File \"participants.tsv\" was not found in {} folder. You can specify path to this "
+                                "file by -participants-file flag.".format(os.getcwd()))
 
-    return participants
+    return participants_df
 
 def fetch_subject(filename):
     """
@@ -449,12 +452,17 @@ def get_parameters():
         '-path-results',
         required=False,
         metavar='<dir_path>',
-        help="Path to directory with results (*.csv files).")
+        help='Path to directory with results (*.csv files).')
+    parser.add_argument(
+        '-participants-file',
+        required=False,
+        metavar='<fname>',
+        help='Path to .tsv file with participants characteristics.')
     parser.add_argument(
         '-config',
         required=False,
         metavar='<fname>',
-        help="Config yaml file listing images that you want to remove from processing.")
+        help='Config yaml file listing images that you want to remove from processing.')
 
     args = parser.parse_args()
     return args
@@ -495,6 +503,16 @@ def main():
         print("-path-results flag has not been set. Assuming current directory as a directory with *csv files.")
         os.chdir(path_output)
 
+    # fetch where is participants.tsv file located
+    if args.participants_file is not None:
+        if os.path.isfile(args.participants_file):
+            path_participants = args.participants_file
+        else:
+            raise FileNotFoundError("Participants file '{}' was not found.".format(args.participants_file))
+    else:
+        # if not passsed, assuming it is located in same dir as a *csv files
+        path_participants = os.path.join(os.getcwd(), 'participants.tsv')
+
     # fetch perlevel .csv files
     csv_files = glob.glob('*perlevel.csv')
 
@@ -518,7 +536,7 @@ def main():
         metric = file_to_metric[csv_file_small]
 
         # fetch metric values per site
-        results_dict = aggregate_per_site(dict_results, metric, dict_exclude_subj)
+        results_dict = aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participants)
         # make it a pandas structure (easier for manipulations)
         df = pd.DataFrame.from_dict(results_dict, orient='index')
 
@@ -536,7 +554,7 @@ def main():
         # ------------------------------------------------------------------
         # compute age and sex per vendor
         # ------------------------------------------------------------------
-        df_age, df_sex = aggregate_age_and_sex_per_vendor()
+        df_age, df_sex = aggregate_age_and_sex_per_vendor(path_participants)
 
         # Concatenate number of sites and subjects with sex and age pervendor
         df_summary_vendor = pd.concat([df_summary_vendor, df_age, df_sex], sort=False, axis=1)
