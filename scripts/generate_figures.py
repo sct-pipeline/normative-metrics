@@ -101,6 +101,16 @@ levels_to_label = {
     '5': 'C5',
 }
 
+# scaling factor (for display)
+scaling_factor = {
+    'dti_fa': 1,
+    'dti_md': 1000,     # scale to mm^2s^-1
+    'dti_ad': 1000,     # scale to mm^2s^-1
+    'dti_rd': 1000,     # scale to mm^2s^-1
+    'mtr': 1,
+    'mtsat': 1,
+    }
+
 # FIGURE PARAMETERS
 FONTSIZE = 15
 TICKSIZE = 10
@@ -124,7 +134,7 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
     results_agg = {}
     # Loop across lines and fill dict of aggregated results
     subjects_removed = []
-    for i in tqdm.tqdm(range(len(dict_results)), unit='iter', unit_scale=False, desc="Loop across lines.",
+    for i in tqdm.tqdm(range(len(dict_results)), unit='iter', unit_scale=False, desc="Loop across lines",
                        ascii=False,
                        ncols=80):
         filename = dict_results[i]['Filename']
@@ -155,8 +165,10 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
                 results_agg[site]['mean'] = defaultdict(int)
             # get label (ROI name)
             label = dict_results[i]['Label']
-            # get val for site (ignore None)
+            # get val for site
             val = dict_results[i][metric_field]
+            if val != 'None':
+                val = float(dict_results[i][metric_field]) * scaling_factor[metric]     # scale metric
             # get vertlevel for site
             vertlevel = dict_results[i]['VertLevel']
             if not val == 'None':
