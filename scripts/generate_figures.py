@@ -34,6 +34,7 @@ logger.setLevel(logging.INFO)  # default: logging.DEBUG, logging.INFO
 hdlr = logging.StreamHandler(sys.stdout)
 logging.root.addHandler(hdlr)
 
+FNAME_LOG = 'log_stats.txt'
 
 # color to assign to each MRI model for the figure
 vendor_to_color = {
@@ -523,11 +524,17 @@ def main():
         raise RuntimeError("No *.csv files were found in the current directory. You can specify directory with *.csv "
                            "files by -path-results flag.")
 
+    # Dump log file there
+    if os.path.exists(FNAME_LOG):
+        os.remove(FNAME_LOG)
+    fh = logging.FileHandler(os.path.join(os.path.abspath(os.curdir), FNAME_LOG))
+    logging.root.addHandler(fh)
+
     # loop across individual .csv files (i.e., across individual qMRI metrics)
     for csv_file in csv_files:
 
-        # open .csv file and create dict
         logger.info('\nProcessing: ' + csv_file)
+        # open .csv file and create dict
         dict_results = []
         with open(csv_file, newline='') as f_csv:
             reader = csv.DictReader(f_csv)
@@ -552,7 +559,7 @@ def main():
         df_vendor_mean.to_csv(fname_csv_per_vendor)
         logger.info('Created: ' + fname_csv_per_vendor)
 
-        print(df_vendor_mean.head())
+        logger.info(df_vendor_mean.head())
 
         # ------------------------------------------------------------------
         # compute age and sex per vendor
@@ -562,7 +569,7 @@ def main():
         # Concatenate number of sites and subjects with sex and age pervendor
         df_summary_vendor = pd.concat([df_summary_vendor, df_age, df_sex], sort=False, axis=1)
 
-        print(df_summary_vendor)
+        logger.info(df_summary_vendor.to_string(index=False))
 
         # ------------------------------------------------------------------
         # generate per VENDORs figure - level evolution per ROI for individual vendors
