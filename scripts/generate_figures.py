@@ -60,14 +60,17 @@ file_to_metric = {
     'MTsat_perlevel.csv': 'mtsat',
     }
 
+# method used for qMRI metric extraction (e.g., 'WA()' or 'MAP()'), see help of sct_extract_metric function
+extraction_method = 'MAP()'
+
 # fetch metric field
 metric_to_field = {
-    'dti_fa': 'WA()',
-    'dti_md': 'WA()',
-    'dti_ad': 'WA()',
-    'dti_rd': 'WA()',
-    'mtr': 'WA()',
-    'mtsat': 'WA()',
+    'dti_fa': extraction_method,
+    'dti_md': extraction_method,
+    'dti_ad': extraction_method,
+    'dti_rd': extraction_method,
+    'mtr': extraction_method,
+    'mtsat': extraction_method,
     }
 
 # fetch metric field
