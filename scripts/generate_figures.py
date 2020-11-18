@@ -85,7 +85,7 @@ metric_to_label = {
     }
 
 # region-of-interest
-roi_to_label =  {
+roi_to_label = {
     'spinal cord': 'Spinal cord',
     'white matter': 'White matter',
     'gray matter': 'Gray matter',
@@ -119,7 +119,7 @@ LABELSIZE = 15
 # TODO - modify this function to save metrics for individual ROI and levels
 def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participants):
     """
-    Aggregate metrics per site. This function assumes that the file participants.tsv is present in -path-results folder
+    Aggregate metrics per site.
     :param dict_results:
     :param metric: Metric type
     :param path_participants: path to participants.tsv file
@@ -153,29 +153,35 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
             if not site in results_agg.keys():
                 # if this is a new site, initialize sub-dict
                 results_agg[site] = {}
-                results_agg[site][
-                    'site'] = site  # need to duplicate in order to be able to sort using vendor AND site with Pandas
+                # need to duplicate site in order to be able to sort using vendor AND site with Pandas
+                results_agg[site]['site'] = site
+                # save vendor (e.g., Siemens)
                 results_agg[site]['vendor'] = participants_df['manufacturer'][rowIndex].array[0]
+                # save model (e.g., Verio)
                 results_agg[site]['model'] = participants_df['manufacturers_model_name'][rowIndex].array[0]
-                # initialize empty sub-dict for metric values with values as list
+                # initialize empty sub-dict for metric values with values as a list
                 # metrics for individual subjects within site
                 results_agg[site]['val'] = defaultdict(list)
                 # initialize empty sub-dict for metric mean values
                 # metrics mean for within site
                 results_agg[site]['mean'] = defaultdict(int)
-            # get label (ROI name)
+            # get label (ROI name) (e.g., spinal cord, white matter, ...)
             label = dict_results[i]['Label']
-            # get val for site
-            val = dict_results[i][metric_field]
-            if val != 'None':
-                val = float(dict_results[i][metric_field]) * scaling_factor[metric]     # scale metric
-            # get vertlevel for site
-            vertlevel = dict_results[i]['VertLevel']
-            if not val == 'None':
-                # append data into sub-dict {'vertlevel' 'label': 'metric value'} (key is tuple, values are list)
-                results_agg[site]['val'][(vertlevel, label)].append(float(val))
-            # compute mean perlevel per ROI/label
-            results_agg[site]['mean'][(vertlevel, label)] = np.mean(results_agg[site]['val'][(vertlevel, label)])
+            # if label is in roi_to_label dict, process this label, i.e., skip labels which we do not want to process
+            if label in roi_to_label.keys():
+                # get val for site
+                val = dict_results[i][metric_field]
+                if val != 'None':
+                    val = float(dict_results[i][metric_field]) * scaling_factor[metric]     # scale metric
+                # get vertlevel for site
+                vertlevel = dict_results[i]['VertLevel']
+                if not val == 'None':
+                    # append data into sub-dict  - {'vertlevel' 'label': 'metric values'} (key is tuple, value is list)
+                    results_agg[site]['val'][(vertlevel, label)].append(float(val))
+                # compute mean perlevel per ROI/label - {'vertlevel' 'label': 'mean value'} (key is tuple, value is float)
+                results_agg[site]['mean'][(vertlevel, label)] = np.mean(results_agg[site]['val'][(vertlevel, label)])
+            else:
+                logger.info('Skipping {}.'.format(label))
 
         else:
             # because we iterate across individual lines, same subject can be included more than one time in
