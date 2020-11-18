@@ -51,6 +51,8 @@ mkdir ~/data-multi-subject_results
 sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script <PATH_TO_SPINE-GENERIC>/process_data.sh
 ```
 
+(analysis will automatically use manually-corrected labels and segmentation located in `derivatives/labels/`)
+
 - Compute qMRI metrics from various ROI per individual vertebral levels across all subjects using `extract_normative_metrics_wrapper.sh` script :
 
 ```
