@@ -48,7 +48,7 @@ mkdir ~/data-multi-subject_results
 - Analyze multi-subject dataset in parallel mode using [process_data.sh](https://github.com/spine-generic/spine-generic/blob/master/process_data.sh) script:
 
 ```
-sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script <PATH_TO_SPINE-GENERIC>/spine-generic/process_data.sh
+sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script <PATH_TO_SPINE-GENERIC>/process_data.sh
 ```
 
 - Compute qMRI metrics from various ROI per individual vertebral levels across all subjects using `extract_normative_metrics_wrapper.sh` script :
