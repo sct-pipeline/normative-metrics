@@ -425,6 +425,31 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     logger.info('Created: ' + fname_fig)
 
 
+def check_consistency(results_dict, path_participants, csv_file):
+    """
+    Check if number of subjects in participants.tsv file corresponds with number of subject in input .csv file
+    :param results_dict: dict with input metric data based on input csv_file
+    :param path_participants: path to participants.tsv file
+    :param csv_file: currently processed .csv file (e.g., DWI_MD_perlevel.csv)
+    :return: None:
+    """
+
+    participants_df = load_participants_file(path_participants)
+
+    # loop across individual sites
+    for site in results_dict.keys():
+        # get number of subject from input csv file with metric (e.g., DWI_MD_perlevel.csv)
+        num_of_sub_csv_file = len(results_dict[site]['val']['5', 'spinal cord'])
+        # get number of subject from input tsv participants file (participants.tsv)
+        num_of_sub_participants_file = len(participants_df[participants_df['institution_id'] == site])
+        if num_of_sub_csv_file != num_of_sub_participants_file:
+            logger.info('site {}: {} subjects were found in input {} file but {} subjects were found in participants.tsv file'.
+                        format(site,
+                               num_of_sub_csv_file,
+                               csv_file,
+                               num_of_sub_participants_file))
+
+
 def load_participants_file(path_participants):
     """
     Build Pandas DF of participants with their characteristics (age, sex, ...) based on participants.tsv file
@@ -566,6 +591,8 @@ def main():
         results_dict = aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participants)
         # make it a pandas structure (easier for manipulations)
         df = pd.DataFrame.from_dict(results_dict, orient='index')
+
+        check_consistency(results_dict, path_participants, csv_file)
 
         # ------------------------------------------------------------------
         # compute per vendor summary
