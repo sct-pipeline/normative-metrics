@@ -12,7 +12,7 @@
 #   -config         - input yml config file with subjects to remove (e.g., due to back data quality)
 #
 # Inspired by - https://github.com/sct-pipeline/spine-generic/blob/master/processing/generate_figure.py
-# Authors: Jan Valosek, Julien Cohen-Adad, Alexandru Foias
+# Authors: Jan Valosek, Julien Cohen-Adad
 
 import os
 import argparse
@@ -171,11 +171,10 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
             if label in roi_to_label.keys():
                 # get val for site
                 val = dict_results[i][metric_field]
-                if val != 'None':
-                    val = float(dict_results[i][metric_field]) * scaling_factor[metric]     # scale metric
-                # get vertlevel for site
-                vertlevel = dict_results[i]['VertLevel']
                 if not val == 'None':
+                    val = float(dict_results[i][metric_field]) * scaling_factor[metric]     # scale metric
+                    # get vertlevel for site
+                    vertlevel = dict_results[i]['VertLevel']        # e.g., 5
                     # append data into sub-dict  - {'vertlevel' 'label': 'metric values'} (key is tuple, value is list)
                     results_agg[site]['val'][(vertlevel, label)].append(float(val))
                 # compute mean perlevel per ROI/label - {'vertlevel' 'label': 'mean value'} (key is tuple, value is float)
@@ -251,7 +250,7 @@ def summary_per_vendor(df):
         dict_vendor_mean[vendor] = {}
         dict_vendor_std[vendor] = {}
         # loop across levels and ROI (e.g., '5', 'spinal cord'; '4', 'spinal cord'; ...)
-        for label in list(df['mean']['amu'].keys()):
+        for label in list(df['mean']['amu'].keys()):        # <class 'tuple'>: (e.g., '5', 'ventral funiculi')
             # if this is a new label, initialize sub-dict
             dict_vendor_mean[vendor][label] = {}
             dict_vendor_std[vendor][label] = {}
