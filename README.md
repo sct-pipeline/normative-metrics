@@ -36,6 +36,7 @@ conda activate venv_sct
 - [Download](https://github.com/spine-generic/data-multi-subject#download) multi-center multi-subject data from GitHub webpage using ``git annex``:
 
 ```
+cd ~
 git clone https://github.com/spine-generic/data-multi-subject && cd data-multi-subject && git annex init && git annex get
 ```
 
@@ -56,6 +57,9 @@ sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-mult
 - Compute qMRI metrics from various ROI per individual vertebral levels across all subjects using `extract_normative_metrics_wrapper.sh` script :
 
 ```
+cd ~
+git clone https://github.com/sct-pipeline/normative-metrics.git
+cd normative-metrics
 sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script scripts/extract_normative_metrics_wrapper.sh
 ```
 
