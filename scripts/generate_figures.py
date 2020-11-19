@@ -175,15 +175,18 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
             if label in roi_to_label.keys():
                 # get val for site
                 val = dict_results[i][metric_field]
+                # get vertlevel for site
+                vertlevel = dict_results[i]['VertLevel']  # e.g., 5
                 if not val == 'None':
                     # append currently processed subject into list to have information which subjects were analysed
                     if not subject in results_agg[site]['processed_subjects']:
                         results_agg[site]['processed_subjects'].append(subject)
                     val = float(dict_results[i][metric_field]) * scaling_factor[metric]     # scale metric
-                    # get vertlevel for site
-                    vertlevel = dict_results[i]['VertLevel']        # e.g., 5
                     # append data into sub-dict  - {'vertlevel' 'label': 'metric values'} (key is tuple, value is list)
                     results_agg[site]['val'][(vertlevel, label)].append(float(val))
+                # if value is missing, report it to log
+                else:
+                    logger.info('Value for {} at level {} in {} is None or missing.'.format(site, vertlevel, label))
                 # compute mean perlevel per ROI/label - {'vertlevel' 'label': 'mean value'} (key is tuple, value is float)
                 results_agg[site]['mean'][(vertlevel, label)] = np.mean(results_agg[site]['val'][(vertlevel, label)])
             else:
@@ -198,10 +201,10 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
 
     return results_agg
 
-# TODO - implement remove_subject feature into this function
-def aggregate_age_and_sex_per_vendor(path_participants):
+
+def aggregate_age_and_sex_per_vendor(path_participants, subjects_processed):
     """
-    Aggregate age and sex per individual vendors
+    Aggregate age and sex per individual vendors for successfully processed subjects
     :param path_participants: path to participants.tsv file
     :return: df_age: pandas df with age statistics (min, max, mean, std) per vendor
     :return: df_sex: pandas df with sex (M, F) per vendor
@@ -213,13 +216,17 @@ def aggregate_age_and_sex_per_vendor(path_participants):
     participants_df = participants_df.replace('-', np.nan)
     # Convert age from str to float to fit with NaN
     participants_df['age'] = participants_df['age'].astype(float)
+
+    # Let only successfully processed participants
+    processed_participants_df = participants_df[participants_df['participant_id'].isin(subjects_processed)]
+
     # Aggregate age per vendors
-    df_age = participants_df.groupby('manufacturer').age.agg(['min', 'max', 'mean', np.std])
+    df_age = processed_participants_df.groupby('manufacturer').age.agg(['min', 'max', 'mean', np.std])
     df_age.columns = ['min age', 'max age', 'mean age', 'std age']
 
     dict_sex = defaultdict(tuple)
     # Loop across subjects grouped by vendors (i.e, 3 groups - GE, Philips, Siemens)
-    for vendor, value in participants_df.groupby('manufacturer'):
+    for vendor, value in processed_participants_df.groupby('manufacturer'):
         # Insert number of males and females as a tuple into dict pervendors
         dict_sex[vendor] = (sum(value['sex'].values == 'M'), sum(value['sex'].values == 'F'))
 
@@ -237,9 +244,9 @@ def aggregate_age_and_sex_per_vendor(path_participants):
     #             dict_age[vendor].append(participants_df.loc[participants_df['participant_id'] == subject]['age'].values)
 
     # ANOVA between vendors in age
-    stat, pvalue = f_oneway(participants_df[participants_df['manufacturer'] == 'Siemens'].age,
-                            participants_df[participants_df['manufacturer'] == 'Philips'].age,
-                            participants_df[participants_df['manufacturer'] == 'GE'].age,
+    stat, pvalue = f_oneway(processed_participants_df[processed_participants_df['manufacturer'] == 'Siemens'].age,
+                            processed_participants_df[processed_participants_df['manufacturer'] == 'Philips'].age,
+                            processed_participants_df[processed_participants_df['manufacturer'] == 'GE'].age,
                             )
 
     logger.info('\nANOVA between vendors in age: p{}\n'.format(format_pvalue(pvalue)))
@@ -293,7 +300,8 @@ def summary_per_vendor(df):
         # loop across sites for given vendor
         for site in df[df['vendor'] == vendor]['site']:
             # get number of used subjects for given site and add it to num_of_sub variable
-            num_of_sub = num_of_sub + len(df[df['vendor'] == vendor]['val'][site]['5', 'spinal cord'])
+            num_of_sub = num_of_sub + len(df[df['vendor'] == vendor]['processed_subjects'][site])
+
         dict_sub_per_vendor[vendor] = num_of_sub
 
     # compute number of sites pervendor
@@ -470,10 +478,11 @@ def check_consistency(results_dict, path_participants, csv_file):
 
     participants_df = load_participants_file(path_participants)
 
+    difference = 0
     # loop across individual sites
     for site in results_dict.keys():
         # get number of subject from input csv file with metric (e.g., DWI_MD_perlevel.csv)
-        num_of_sub_csv_file = len(results_dict[site]['val']['5', 'spinal cord'])
+        num_of_sub_csv_file = len(results_dict[site]['processed_subjects'])
         # get number of subject from input tsv participants file (participants.tsv)
         num_of_sub_participants_file = len(participants_df[participants_df['institution_id'] == site])
         if num_of_sub_csv_file != num_of_sub_participants_file:
@@ -482,6 +491,11 @@ def check_consistency(results_dict, path_participants, csv_file):
                                num_of_sub_csv_file,
                                csv_file,
                                num_of_sub_participants_file))
+            difference += num_of_sub_participants_file - num_of_sub_csv_file
+    logger.info('\nTotally {} subjects were found in participants.tsv file, but only {} subjects in {}'.
+                format(len(participants_df),
+                       len(participants_df)-difference,
+                       csv_file))
 
 
 def load_participants_file(path_participants):
@@ -628,8 +642,8 @@ def main():
 
         # fetch all successfully processed subjects
         subjects_processed = [item for sublist in list(df['processed_subjects'].values) for item in sublist]
-        logger.info('{} subjects were processed: {}'.format(len(subjects_processed), subjects_processed))
-        #check_consistency(results_dict, path_participants, csv_file)
+        logger.info('{} subjects were processed: {}\n'.format(len(subjects_processed), subjects_processed))
+        check_consistency(results_dict, path_participants, csv_file)
 
         # ------------------------------------------------------------------
         # compute per vendor summary
@@ -645,7 +659,7 @@ def main():
         # ------------------------------------------------------------------
         # compute age and sex per vendor
         # ------------------------------------------------------------------
-        df_age, df_sex = aggregate_age_and_sex_per_vendor(path_participants)
+        df_age, df_sex = aggregate_age_and_sex_per_vendor(path_participants, subjects_processed)
 
         # Concatenate number of sites and subjects with sex and age pervendor
         df_summary_vendor = pd.concat([df_summary_vendor, df_age, df_sex], sort=False, axis=1)
