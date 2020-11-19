@@ -25,6 +25,7 @@ import yaml
 
 import numpy as np
 from collections import defaultdict
+from scipy.stats import f_oneway
 import matplotlib.pyplot as plt
 import logging
 
@@ -227,6 +228,14 @@ def aggregate_age_and_sex_per_vendor(path_participants):
     #     for vendor in vendor_to_color.keys():
     #         if participants_df.loc[participants_df['participant_id'] == subject]['manufacturer'].values == vendor:
     #             dict_age[vendor].append(participants_df.loc[participants_df['participant_id'] == subject]['age'].values)
+
+    # ANOVA between vendors in age
+    stat, pvalue = f_oneway(participants_df[participants_df['manufacturer'] == 'Siemens'].age,
+                            participants_df[participants_df['manufacturer'] == 'Philips'].age,
+                            participants_df[participants_df['manufacturer'] == 'GE'].age,
+                            )
+
+    logger.info('ANOVA between vendors in age: p')
 
     return df_age, df_sex
 
