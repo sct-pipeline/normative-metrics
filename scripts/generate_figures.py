@@ -85,6 +85,15 @@ metric_to_label = {
     'mtsat': 'Magnetization transfer saturation [%]',
     }
 
+metric_to_title = {
+    'dti_fa': 'Fractional anisotropy',
+    'dti_md': 'Mean diffusivity',
+    'dti_ad': 'Axial diffusivity',
+    'dti_rd': 'Radial diffusivity',
+    'mtr': 'Magnetization transfer ratio',
+    'mtsat': 'Magnetization transfer saturation',
+    }
+
 # region-of-interest
 roi_to_label = {
     'spinal cord': 'Spinal cord',
@@ -394,7 +403,10 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
 
     fig, _ = plt.subplots(figsize=(14, 7))
     # add master title for whole figure
-    fig.suptitle(metric_to_label[metric], fontsize=FONTSIZE)
+    fig.suptitle('{} for totally {} subjects across {} vendors.'.format(metric_to_title[metric],
+                                                                        df_summary_vendor['M'].sum() +
+                                                                        df_summary_vendor['F'].sum(),
+                                                                        len(vendor_to_color)), fontsize=FONTSIZE)
 
     # loop across vendors
     for vendor, row in df_vendor.iterrows():
@@ -425,6 +437,7 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
             plt.xticks(x, levels_to_label.values())
             # add grid
             plt.grid(axis='y', linestyle="--")
+            ax.set_ylabel(metric_to_label[metric])
             # add title to individual subpolots (i.e., ROI/label)
             plt.title(roi_to_label[label])
 
@@ -433,9 +446,9 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     # insert number of subjects and number of sites per vendor into legend
     # loop across vendors
     for num in range(0,len(leg.get_texts())):
-        leg.get_texts()[num].set_text('{}: {} subjects, {} sites'.
-                                    format(df_summary_vendor.index.values[num], df_summary_vendor.iloc[num, 0],
-                                           df_summary_vendor.iloc[num, 1]))
+        leg.get_texts()[num].set_text('{}: {} subjects, {} sites'.format(df_summary_vendor.index.values[num],
+                                                                         df_summary_vendor.iloc[num, 0],
+                                                                         df_summary_vendor.iloc[num, 1]))
 
     # Move subplots closer to each other
     plt.subplots_adjust(wspace=-0.5)
