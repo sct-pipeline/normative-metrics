@@ -195,7 +195,7 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
                     results_agg[site]['val'][(vertlevel, label)].append(float(val))
                 # if value is missing, report it to log
                 else:
-                    logger.info('Value for {} at level {} in {} is None or missing.'.format(site, vertlevel, label))
+                    logger.info('Value for {} at level {} in {} is None or missing.'.format(subject, vertlevel, label))
                 # compute mean perlevel per ROI/label - {'vertlevel' 'label': 'mean value'} (key is tuple, value is float)
                 results_agg[site]['mean'][(vertlevel, label)] = np.mean(results_agg[site]['val'][(vertlevel, label)])
             else:
