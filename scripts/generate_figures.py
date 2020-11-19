@@ -143,7 +143,7 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
         # Fetch metadata for the site
         # dataset_description = read_dataset_description(filename, path_data)
         # cluster values per site
-        subject = fetch_subject(filename)
+        subject = fetch_subject(filename)       # e.g., sub-beijingGE01
         # check if subject needs to be discarded
         if not remove_subject(subject, metric, dict_exclude_subj):
             # Fetch index of row corresponding to subject
@@ -160,6 +160,9 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
                 results_agg[site]['vendor'] = participants_df['manufacturer'][rowIndex].array[0]
                 # save model (e.g., Verio)
                 results_agg[site]['model'] = participants_df['manufacturers_model_name'][rowIndex].array[0]
+                # initialize empty sub-list for processed subjects for given site
+                if not 'processed_subjects' in results_agg[site].keys():
+                    results_agg[site]['processed_subjects'] = list()
                 # initialize empty sub-dict for metric values with values as a list
                 # metrics for individual subjects within site
                 results_agg[site]['val'] = defaultdict(list)
@@ -173,6 +176,9 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
                 # get val for site
                 val = dict_results[i][metric_field]
                 if not val == 'None':
+                    # append currently processed subject into list to have information which subjects were analysed
+                    if not subject in results_agg[site]['processed_subjects']:
+                        results_agg[site]['processed_subjects'].append(subject)
                     val = float(dict_results[i][metric_field]) * scaling_factor[metric]     # scale metric
                     # get vertlevel for site
                     vertlevel = dict_results[i]['VertLevel']        # e.g., 5
@@ -187,11 +193,12 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
             # because we iterate across individual lines, same subject can be included more than one time in
             # subjects_removed list -> use conversion to set in next command
             subjects_removed.append(subject)
-    logger.info("Subjects removed: {}".format(set(subjects_removed)))
+
+    logger.info('{} subjects were removed: {}'.format(len(set(subjects_removed)),set(subjects_removed)))
 
     return results_agg
 
-# TODO - impelement remove_subject feature into this function
+# TODO - implement remove_subject feature into this function
 def aggregate_age_and_sex_per_vendor(path_participants):
     """
     Aggregate age and sex per individual vendors
@@ -619,7 +626,10 @@ def main():
         # make it a pandas structure (easier for manipulations)
         df = pd.DataFrame.from_dict(results_dict, orient='index')
 
-        check_consistency(results_dict, path_participants, csv_file)
+        # fetch all successfully processed subjects
+        subjects_processed = [item for sublist in list(df['processed_subjects'].values) for item in sublist]
+        logger.info('{} subjects were processed: {}'.format(len(subjects_processed), subjects_processed))
+        #check_consistency(results_dict, path_participants, csv_file)
 
         # ------------------------------------------------------------------
         # compute per vendor summary
