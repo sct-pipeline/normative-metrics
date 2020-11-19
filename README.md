@@ -52,7 +52,7 @@ mkdir ~/data-multi-subject_results
 sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script <PATH_TO_SPINE-GENERIC>/process_data.sh
 ```
 
-(analysis will automatically use manually-corrected labels and segmentation located in `derivatives/labels/`)
+(Analysis will automatically use manually-corrected labels and segmentation located in `derivatives/labels/`)
 
 - Compute qMRI metrics from various ROI per individual vertebral levels across all subjects using `extract_normative_metrics_wrapper.sh` script :
 
@@ -67,8 +67,15 @@ sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-mult
 
 (Individual \*perlevel.csv files will be stored in `/results/perlevel` folder)
 
-- Generate figures
+- Generate figures and compute statistics
 
 ```
-python generate_figures.py -path-results ~/data-multi-subject-master_results/results/
+python generate_figures.py -path-results ~/data-multi-subject-master_results/results/perlevel -config ~/data-multi-subject_results/results/exclude.yml -participants-file  ~/data-multi-subject_results/results/participants.tsv
 ```
+where:
+
+`-path-results` - path to directory with *csv perlevel files (created in the previous step)
+
+`-participants-file` - path to .tsv file with participants characteristics (age, sex, ...)
+
+`-config` - path to .yml file containing subjects to exclude
