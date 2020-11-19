@@ -235,7 +235,7 @@ def aggregate_age_and_sex_per_vendor(path_participants):
                             participants_df[participants_df['manufacturer'] == 'GE'].age,
                             )
 
-    logger.info('ANOVA between vendors in age: p')
+    logger.info('\nANOVA between vendors in age: p{}\n'.format(format_pvalue(pvalue)))
 
     return df_age, df_sex
 
@@ -432,6 +432,24 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     fname_fig = os.path.join(path_output, metric + '_per_vendor.png')
     plt.savefig(fname_fig, dpi=200)
     logger.info('Created: ' + fname_fig)
+
+def format_pvalue(p_value, alpha=0.05, include_equal=True):
+    """
+    If p-value is lower than 0.05, change it to "<0.05", otherwise, round it to two decimals
+    :param p_val: input p-value as a float
+    :param alpha: significance level
+    :param include_equal: include equal sign ('=') to pvalue (e.g., '=0.06') or not (e.g., '0.06')
+    :return: p_val: processed p-value (replaced by "<0.05" or rounded to two decimals) as a str
+    """
+    if p_value < alpha:
+        p_value = "<" + str(alpha)
+    else:
+        if include_equal:
+            p_value = '=' + str(round(p_value, 3))
+        else:
+            p_value = str(round(p_value, 3))
+
+    return p_value
 
 
 def check_consistency(results_dict, path_participants, csv_file):
