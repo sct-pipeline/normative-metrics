@@ -541,7 +541,11 @@ def remove_subject(subject, metric, dict_exclude_subj):
     :return: Bool
     """
     if metric in dict_exclude_subj.keys():
+        # remove single subject (e.g., sub-geneva02)
         if subject in dict_exclude_subj[metric]:
+            return True
+        # remove all subjects for given site (e.g., fslAchieva)
+        elif subject[4:-2] in dict_exclude_subj[metric]:    # subject[4:-2] extract only site from subject
             return True
     return False
 
