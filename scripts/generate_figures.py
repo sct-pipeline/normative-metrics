@@ -415,15 +415,15 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
             # create individual subplots
             ax = plt.subplot(2, 3, index + 1)
             # loop across levels
-            y = list()
-            e = list()
+            y = list()      # mean values
+            e = list()      # std values
             for level in levels_to_label.keys():
                 # get mean value for given label (e.g, C2, C3, etc) and given label/roi (e.g., spinal cord etc.)
                 y.append(row[level,label][0])
                 # get std value for given label (e.g, C2, C3, etc) and given label/roi (e.g., spinal cord etc.)
                 e.append(row[level, label][1])
 
-            # plot mean values pervendor for each level (C2, C3, C4, C5)
+            # plot mean and std values pervendor for each level (C2, C3, C4, C5)
             x = [float(key) for key in levels_to_label]  # individual levels - 2,3,4,5
             plt.errorbar(x,
                          y,
