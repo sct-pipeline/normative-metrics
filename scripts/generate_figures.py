@@ -36,6 +36,7 @@ hdlr = logging.StreamHandler(sys.stdout)
 logging.root.addHandler(hdlr)
 
 FNAME_LOG = 'log_stats.txt'
+log_line = '========================================================'
 
 # color to assign to each MRI model for the figure
 vendor_to_color = {
@@ -206,7 +207,7 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
             # subjects_removed list -> use conversion to set in next command
             subjects_removed.append(subject)
 
-    logger.info('{} subjects were removed: {}'.format(len(set(subjects_removed)),set(subjects_removed)))
+    logger.info('\n{} subjects were removed: {}\n'.format(len(set(subjects_removed)),set(subjects_removed)))
 
     return results_agg
 
@@ -387,7 +388,7 @@ def generate_level_evolution_persite(df, metric, path_output):
     # save figure
     fname_fig = os.path.join(path_output, metric + '_per_sites.png')
     plt.savefig(fname_fig, dpi=200)
-    logger.info('Created: ' + fname_fig)
+    logger.info('\nCreated: {}\n'.format(fname_fig))
 
     # plt.show()
 
@@ -493,7 +494,6 @@ def check_consistency(results_dict, path_participants, csv_file):
 
     participants_df = load_participants_file(path_participants)
 
-    difference = 0
     # loop across individual sites
     for site in results_dict.keys():
         # get number of subject from input csv file with metric (e.g., DWI_MD_perlevel.csv)
@@ -506,11 +506,6 @@ def check_consistency(results_dict, path_participants, csv_file):
                                num_of_sub_csv_file,
                                csv_file,
                                num_of_sub_participants_file))
-            difference += num_of_sub_participants_file - num_of_sub_csv_file
-    logger.info('\nTotally {} subjects were found in participants.tsv file, but only {} subjects in {}'.
-                format(len(participants_df),
-                       len(participants_df)-difference,
-                       csv_file))
 
 
 def load_participants_file(path_participants):
@@ -638,7 +633,7 @@ def main():
     # loop across individual .csv files (i.e., across individual qMRI metrics)
     for csv_file in csv_files:
 
-        logger.info('\nProcessing: ' + csv_file)
+        logger.info('\n{}\nProcessing: {}\n{}'.format(log_line, csv_file, log_line))
         # open .csv file and create dict
         dict_results = []
         with open(csv_file, newline='') as f_csv:
@@ -667,7 +662,7 @@ def main():
         # and save mean as a .csv file
         fname_csv_per_vendor = os.path.join(os.getcwd(), metric) + '_per_vendors.csv'
         df_vendor_mean.to_csv(fname_csv_per_vendor)
-        logger.info('Created: ' + fname_csv_per_vendor)
+        logger.info('\nCreated: {}\n'.format(fname_csv_per_vendor))
 
         logger.info(df_vendor_mean.head())
 
@@ -695,7 +690,7 @@ def main():
 
         generate_level_evolution_persite(df, metric, path_output)
 
-        print('Finished.')
+        print('\n Analysis on {} is completed.'.format(csv_file))
 
 if __name__ == "__main__":
     main()
