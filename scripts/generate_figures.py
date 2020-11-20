@@ -462,7 +462,7 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     # save figure
     fname_fig = os.path.join(path_output, metric + '_per_vendor.png')
     plt.savefig(fname_fig, dpi=200)
-    logger.info('Created: ' + fname_fig)
+    logger.info('\nCreated: ' + fname_fig)
 
 def format_pvalue(p_value, alpha=0.05, include_equal=True):
     """
@@ -694,7 +694,7 @@ def main():
 
         generate_level_evolution_persite(df, metric, path_output)
 
-        print('\n Analysis on {} is completed.'.format(csv_file))
+        print('\n Analysis of {} is completed.'.format(csv_file))
 
 if __name__ == "__main__":
     main()
