@@ -441,14 +441,16 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
             # add title to individual subpolots (i.e., ROI/label)
             plt.title(roi_to_label[label])
 
-    # place legend next to last subplot
-    leg = plt.legend(bbox_to_anchor=(1.1, 1), fontsize=FONTSIZE - 5)
-    # insert number of subjects and number of sites per vendor into legend
-    # loop across vendors
-    for num in range(0,len(leg.get_texts())):
-        leg.get_texts()[num].set_text('{}: {} subjects, {} sites'.format(df_summary_vendor.index.values[num],
-                                                                         df_summary_vendor.iloc[num, 0],
-                                                                         df_summary_vendor.iloc[num, 1]))
+            # show legend only one time (in right up corner)
+            if index == 2:
+                # place legend next to last subplot
+                leg = plt.legend(bbox_to_anchor=(1.1, 1.03), fontsize=FONTSIZE - 5)
+                # insert number of subjects and number of sites per vendor into legend
+                # loop across vendors
+                for num in range(0,len(leg.get_texts())):
+                    leg.get_texts()[num].set_text('{}: {} subjects, {} sites'.format(df_summary_vendor.index.values[num],
+                                                                                     df_summary_vendor.iloc[num, 0],
+                                                                                     df_summary_vendor.iloc[num, 1]))
 
     # Move subplots closer to each other
     plt.subplots_adjust(wspace=-0.5)
