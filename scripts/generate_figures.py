@@ -233,6 +233,7 @@ def aggregate_age_and_sex_per_vendor(path_participants, subjects_processed):
     # Aggregate age per vendors
     df_age = processed_participants_df.groupby('manufacturer').age.agg(['min', 'max', 'mean', np.std])
     df_age.columns = ['min age', 'max age', 'mean age', 'std age']
+    df_age = df_age.round(1)    # round to one decimal
 
     dict_sex = defaultdict(tuple)
     # Loop across subjects grouped by vendors (i.e, 3 groups - GE, Philips, Siemens)
@@ -293,9 +294,9 @@ def summary_per_vendor(df):
                 # collect mean values from all sites for given vendor to one list
                 mean_values.append(float(df['mean'][site][label]))
             # compute mean from all sites' mean values for given vendor and insert it into dict
-            dict_vendor_mean[vendor][label] = np.mean(mean_values)
+            dict_vendor_mean[vendor][label] = round(np.mean(mean_values),2)
             # compute std from all sites' mean values for given vendor and insert it into dict
-            dict_vendor_std[vendor][label] = np.std(mean_values)
+            dict_vendor_std[vendor][label] = round(np.std(mean_values),2)
 
     # convert dict to pandas df for easy csv save
     df_vendor_mean = pd.DataFrame.from_dict(dict_vendor_mean, orient='index')
