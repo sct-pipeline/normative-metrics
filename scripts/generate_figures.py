@@ -78,12 +78,21 @@ metric_to_field = {
 
 # fetch metric field
 metric_to_label = {
-    'dti_fa': 'Fractional anisotropy',
-    'dti_md': 'Mean diffusivity [$mm^2.s^{-1}$]',
-    'dti_ad': 'Axial diffusivity [$mm^2.s^{-1}$]',
-    'dti_rd': 'Radial diffusivity [$mm^2.s^{-1}$]',
-    'mtr': 'Magnetization transfer ratio [%]',
-    'mtsat': 'Magnetization transfer saturation [%]',
+    'dti_fa': 'FA',
+    'dti_md': 'MD [$mm^2.s^{-1}$]',
+    'dti_ad': 'AD [$mm^2.s^{-1}$]',
+    'dti_rd': 'RD [$mm^2.s^{-1}$]',
+    'mtr': 'MTR [%]',
+    'mtsat': 'MTsat [%]',
+    }
+
+metric_to_abbreviation = {
+    'dti_fa': 'FA',
+    'dti_md': 'MD',
+    'dti_ad': 'AD',
+    'dti_rd': 'RD',
+    'mtr': 'MTR',
+    'mtsat': 'MTsat',
     }
 
 metric_to_title = {
@@ -264,11 +273,12 @@ def aggregate_age_and_sex_per_vendor(path_participants, subjects_processed):
 
     return df_age, df_sex
 
-def summary_per_vendor(df):
+def summary_per_vendor(df, metric):
     """
     Compute mean and std values pervendor for individual ROI/labels perlevel and number of used (so, after exclusion)
     subjects and sites per vendor.
     :param df: pandas df with metric values per site
+    :param metric: currently processed metric (e.g., dti_fa)
     :return: df_vendor_mean: pandas df with mean metric values per vendor
     :return: df_vendor_std: pandas df with std metric values per vendor
     :return: df_summary_vendor: pandas df with number of subjects and sites per vendor
@@ -278,16 +288,19 @@ def summary_per_vendor(df):
     # initialize dict
     dict_vendor_mean = {}
     dict_vendor_std = {}
+    dict_vendor_cov = {}
     # loop across vendors
     for vendor in vendor_to_color.keys():
         # if this is a new vendor, initialize sub-dict
         dict_vendor_mean[vendor] = {}
         dict_vendor_std[vendor] = {}
+        dict_vendor_cov[vendor] = {}
         # loop across levels and ROI (e.g., '5', 'spinal cord'; '4', 'spinal cord'; ...)
         for label in list(df['mean']['amu'].keys()):        # <class 'tuple'>: (e.g., '5', 'ventral funiculi')
             # if this is a new label, initialize sub-dict
             dict_vendor_mean[vendor][label] = {}
             dict_vendor_std[vendor][label] = {}
+            dict_vendor_cov[vendor][label] = {}
             mean_values = list()
             # loop across sites for given vendor
             for site in df[df['vendor'] == vendor]['site']:
@@ -297,11 +310,28 @@ def summary_per_vendor(df):
             dict_vendor_mean[vendor][label] = round(np.mean(mean_values),2)
             # compute std from all sites' mean values for given vendor and insert it into dict
             dict_vendor_std[vendor][label] = round(np.std(mean_values),2)
+            # compute COV in %
+            dict_vendor_cov[vendor][label] = round((np.std(mean_values)/np.mean(mean_values))*100,2)
+
 
     # convert dict to pandas df for easy csv save
     df_vendor_mean = pd.DataFrame.from_dict(dict_vendor_mean, orient='index')
     df_vendor_std = pd.DataFrame.from_dict(dict_vendor_std, orient='index')
+    df_vendor_cov = pd.DataFrame.from_dict(dict_vendor_cov, orient='index')
 
+    # find out which ROI/label and vertebral level has the largest COV and print it to the log
+    logger.info('')    # print empty line to log
+    cov_max = df_vendor_cov.max(axis=1)             # get max across all ROI and levels
+    cov_max_col = df_vendor_cov.idxmax(axis=1)      # get column name (e.g., '3, spinal cord')
+    # loop across vendors
+    for vendor in vendor_to_color.keys():
+        logger.info('{} showed the largest COV for {} in {} at {} level ({}%).'.format(
+                    metric_to_abbreviation[metric],  # metric (e.g., FA)
+                    vendor,                  # vendor (e.g., Siemens)
+                    cov_max_col[vendor][1],  # label (e.g., spinal cord)
+                    cov_max_col[vendor][0],  # vertebral level (e.g., 3)
+                    cov_max[vendor],         # COV value in %
+                    ))
 
     # compute number of subjects pervendor
     dict_sub_per_vendor = dict()        # e.g.: {'GE': 7, 'Philips': 2, 'Siemens': 9}
@@ -326,9 +356,9 @@ def summary_per_vendor(df):
                                    pd.DataFrame.from_dict(dict_sites_per_vendor, orient='index')], axis=1, sort=False)
     df_summary_vendor.columns = ['num. of sub. per vendor', 'num. of sites per vendor']
 
-    return df_vendor_mean, df_vendor_std, df_summary_vendor
+    return df_vendor_mean, df_vendor_std, df_vendor_cov, df_summary_vendor
 
-def generate_level_evolution_persite(df, metric, path_output):
+def generate_level_evolution_persite(df, df_summary_vendor,metric, path_output):
     """
     Generate figure for each metric - level evolution (C2, C3, C4, C5) per ROI for individual sites
     :param df: pandas df with input data
@@ -339,9 +369,14 @@ def generate_level_evolution_persite(df, metric, path_output):
     # get individual sites
     site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
 
-    fig, _ = plt.subplots(figsize=(14, 7))
+    fig, _ = plt.subplots(figsize=(17, 10))
     # add master title for whole figure
     fig.suptitle(metric_to_label[metric], fontsize=FONTSIZE)
+    # add master title for whole figure
+    fig.suptitle('{} for totally {} subjects across {} sites.'.format(metric_to_title[metric],
+                                                                      df_summary_vendor['M'].sum() +
+                                                                      df_summary_vendor['F'].sum(),
+                                                                      len(site_sorted)), fontsize=FONTSIZE)
 
     # loop across sites
     for site in site_sorted:
@@ -378,8 +413,25 @@ def generate_level_evolution_persite(df, metric, path_output):
             # add title to individual subpolots (i.e., ROI/label)
             plt.title(roi_to_label[label])
 
-    # place legend next to last subplot
-    plt.legend(bbox_to_anchor=(1.1, 1), fontsize=FONTSIZE - 5)
+            # # show legend only one time (in right up corner)
+            # if index == 2:
+            #     # place legend next to last subplot
+            #     leg = plt.legend(bbox_to_anchor=(1.1, 1.03), fontsize=FONTSIZE - 5)
+            #     # insert number of subjects for individual sites into legend
+            #     # loop across sites
+            #     for num in range(0,len(leg.get_texts())):
+            #         leg.get_texts()[num].set_text('{}: {} subjects'.format(site_sorted[num],        # site
+            #                                                                len(df[df['site'] == site_sorted[num]]['processed_subjects'].values[0])))    # number of subjects for given site
+
+    # TODO - find how to show in legend each site only once
+    leg = fig.legend()
+    leg.texts = leg.get_texts()[:len(site_sorted)]
+    # loop across sites
+    for num in range(0,len(site_sorted)):
+        leg.texts[num].set_text('{}: {} subjects'.format(site_sorted[num],        # site
+                                                               len(df[df['site'] == site_sorted[num]]['processed_subjects'].values[0])))
+
+
     # Move subplots closer to each other
     plt.subplots_adjust(wspace=-0.5)
     plt.tight_layout()
@@ -402,6 +454,10 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     :param path_output: path where figures will be generated (manually entered -path-results path or current dir)
     :return:
     """
+
+    FONTSIZE = 20
+    TICKSIZE = 15
+    LEGENDSIZE = 11
 
     fig, _ = plt.subplots(figsize=(14, 7))
     # add master title for whole figure
@@ -431,22 +487,24 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
                          y,
                          e,
                          marker=vendor_to_marker[vendor],  # change marker symbol based on vendor
-                         markersize=8,  # size of marker symbol
+                         markersize=10,  # size of marker symbol
                          capsize=5,     # the length of the error bar caps
                          alpha=0.5,  # transparency
                          label=vendor)
             # rename xticks to C2, C3, C4, C5
-            plt.xticks(x, levels_to_label.values())
+            plt.xticks(x, levels_to_label.values(), fontsize=TICKSIZE)
+            # Increase site if yticks
+            plt.yticks(fontsize=TICKSIZE)
             # add grid
             plt.grid(axis='y', linestyle="--")
-            ax.set_ylabel(metric_to_label[metric])
+            ax.set_ylabel(metric_to_label[metric], fontsize=TICKSIZE)
             # add title to individual subpolots (i.e., ROI/label)
-            plt.title(roi_to_label[label])
+            plt.title(roi_to_label[label], fontsize=FONTSIZE)
 
             # show legend only one time (in right up corner)
             if index == 2:
                 # place legend next to last subplot
-                leg = plt.legend(bbox_to_anchor=(1.1, 1.03), fontsize=FONTSIZE - 5)
+                leg = plt.legend(bbox_to_anchor=(1.1, 1.03), fontsize=LEGENDSIZE)
                 # insert number of subjects and number of sites per vendor into legend
                 # loop across vendors
                 for num in range(0,len(leg.get_texts())):
@@ -663,11 +721,14 @@ def main():
         # ------------------------------------------------------------------
         # compute per vendor summary
         # ------------------------------------------------------------------
-        df_vendor_mean, df_vendor_std, df_summary_vendor = summary_per_vendor(df)
-        # and save mean as a .csv file
-        fname_csv_per_vendor = os.path.join(os.getcwd(), metric) + '_per_vendors.csv'
-        df_vendor_mean.to_csv(fname_csv_per_vendor)
-        logger.info('\nCreated: {}\n'.format(fname_csv_per_vendor))
+        df_vendor_mean, df_vendor_std, df_vendor_cov, df_summary_vendor = summary_per_vendor(df, metric)
+        #  Save mean and cov as .csv files
+        fname_csv_per_vendor_mean = os.path.join(os.getcwd(), metric) + '_mean_per_vendors.csv'
+        df_vendor_mean.to_csv(fname_csv_per_vendor_mean)
+        logger.info('\nCreated: {}\n'.format(fname_csv_per_vendor_mean))
+        fname_csv_per_vendor_cov = os.path.join(os.getcwd(), metric) + '_cov_per_vendors.csv'
+        df_vendor_cov.to_csv(fname_csv_per_vendor_cov)
+        logger.info('\nCreated: {}\n'.format(fname_csv_per_vendor_cov))
 
         logger.info(df_vendor_mean.head())
 
