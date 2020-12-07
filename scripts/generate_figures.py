@@ -1,18 +1,24 @@
 #!/usr/bin/env python
 #
-# Generate figures for individual qMRI metrics
+# Generate figures and statistics for individual qMRI metrics (FA, MD, AD, RD, MTR, MTsat) for different labels/ROIs
+# (SC, WM, GM, ...) along individual cervical levels (C2, C3, C4, C5) pervendor and persite
 #
-# USAGE (run this script in the directory with *csv files, i.e. "results" directory):
+# USAGE (run this script in the directory with perlevel *csv files, i.e. "results/perlevel" directory):
+#
 #   python generate_figures.py
-# OR specify directory with csv files using -path-results flag:
-#   python generate_figures.py -path-results ~/spineGeneric-multi-subject_results/results/
+#   -path-results ~/spineGeneric-multi-subject_results/results/perlevel
+#   -config ~/spineGeneric-multi-subject_results/results/exclude.yml
+#   -participants-file ~/spineGeneric-multi-subject_results/results/participants.tsv
 #
-# Optional option:
-#   -path-results   - directory with *.csv files
-#   -config         - input yml config file with subjects to remove (e.g., due to back data quality)
+# Input arguments:
+#   -path-results           - directory with *.csv files
+#   -config                 - input yml config file with subjects to exclude (e.g., due to back data quality)
+#   -participants-file      - input .tsv file with participants characteristics (sex, age, ...)
 #
 # Inspired by - https://github.com/sct-pipeline/spine-generic/blob/master/processing/generate_figure.py
 # Authors: Jan Valosek, Julien Cohen-Adad
+
+# TODO - combine this script (and probably also whole repo) with spine-generic repo
 
 import os
 import argparse
@@ -45,7 +51,7 @@ vendor_to_color = {
     'Siemens': 'limegreen',
     }
 
-# marker change for individual vendors for scatter plots
+# change marker for individual vendors for scatter plots
 # https://matplotlib.org/3.2.2/api/markers_api.html
 vendor_to_marker = {
     'GE': 'o',          # circle
@@ -66,7 +72,7 @@ file_to_metric = {
 # method used for qMRI metric extraction (e.g., 'WA()' or 'MAP()'), see help of sct_extract_metric function
 extraction_method = 'MAP()'
 
-# fetch metric field
+# fetch metric field (column name in .csv file)
 metric_to_field = {
     'dti_fa': extraction_method,
     'dti_md': extraction_method,
@@ -76,16 +82,7 @@ metric_to_field = {
     'mtsat': extraction_method,
     }
 
-# fetch metric field
-metric_to_label = {
-    'dti_fa': 'FA',
-    'dti_md': 'MD [$mm^2.s^{-1}$]',
-    'dti_ad': 'AD [$mm^2.s^{-1}$]',
-    'dti_rd': 'RD [$mm^2.s^{-1}$]',
-    'mtr': 'MTR [%]',
-    'mtsat': 'MTsat [%]',
-    }
-
+# abbreviation for log
 metric_to_abbreviation = {
     'dti_fa': 'FA',
     'dti_md': 'MD',
@@ -95,6 +92,7 @@ metric_to_abbreviation = {
     'mtsat': 'MTsat',
     }
 
+# master titles for figures with subplots
 metric_to_title = {
     'dti_fa': 'Fractional anisotropy',
     'dti_md': 'Mean diffusivity',
@@ -104,7 +102,17 @@ metric_to_title = {
     'mtsat': 'Magnetization transfer saturation',
     }
 
-# region-of-interest
+# ylabel for subplots
+metric_to_label = {
+    'dti_fa': 'FA',
+    'dti_md': 'MD [$mm^2.s^{-1}$]',
+    'dti_ad': 'AD [$mm^2.s^{-1}$]',
+    'dti_rd': 'RD [$mm^2.s^{-1}$]',
+    'mtr': 'MTR [%]',
+    'mtsat': 'MTsat [%]',
+    }
+
+# titles for individual subplots
 roi_to_label = {
     'spinal cord': 'Spinal cord',
     'white matter': 'White matter',
@@ -114,6 +122,7 @@ roi_to_label = {
     'ventral funiculi': 'Ventral funiculi/columns',
 }
 
+# xticks in subplots
 levels_to_label = {
     '2': 'C2',
     '3': 'C3',
@@ -139,11 +148,13 @@ LABELSIZE = 15
 # TODO - modify this function to save metrics for individual ROI and levels
 def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participants):
     """
-    Aggregate metrics per site.
-    :param dict_results:
-    :param metric: Metric type
+    Aggregate qMRI metrics per site. Loop across lines in dict_results (loaded rows from input .csv file) and build
+    nested dict with aggregated metrics persite
+    :param dict_results: dictionary with loaded rows from input .csv file for given qMRI metric
+    :param metric: currently processed metric (e.g., dti_md)
+    :param dict_exclude_subj: dictionary with subjects to exclude from analysis (due to bad data quality, etc.)
     :param path_participants: path to participants.tsv file
-    :return: results_agg: nested dict with metric values per site
+    :return: results_agg: nested dict with metric values persite
     """
 
     participants_df = load_participants_file(path_participants)
@@ -223,8 +234,9 @@ def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participant
 
 def aggregate_age_and_sex_per_vendor(path_participants, subjects_processed):
     """
-    Aggregate age and sex per individual vendors for successfully processed subjects
+    Aggregate age and sex per individual vendors for successfully processed subjects (i.e., without excluded subjects)
     :param path_participants: path to participants.tsv file
+    :param subjects_processed: list of all successfully processed subjects
     :return: df_age: pandas df with age statistics (min, max, mean, std) per vendor
     :return: df_sex: pandas df with sex (M, F) per vendor
     """
@@ -275,16 +287,18 @@ def aggregate_age_and_sex_per_vendor(path_participants, subjects_processed):
 
 def summary_per_vendor(df, metric):
     """
-    Compute mean and std values pervendor for individual ROI/labels perlevel and number of used (so, after exclusion)
-    subjects and sites per vendor.
+    Compute mean, sd and cov values pervendor (Siemens, GE, Philips) for individual labels/ROIs (SC, WM, GM, ...)
+    perlevel (C2, C3, C4, C5) and number of used (so, after exclusion) subjects and sites per vendor.
     :param df: pandas df with metric values per site
     :param metric: currently processed metric (e.g., dti_fa)
     :return: df_vendor_mean: pandas df with mean metric values per vendor
-    :return: df_vendor_sd: pandas df with std metric values per vendor
+    :return: df_vendor_sd: pandas df with sd metric values per vendor
+    :return: df_vendor_mean_and_sd: pandas df with mean and sd as a single string (great for Excel import)
+    :return: df_vendor_cov: pandas df with COV values per vendor
     :return: df_summary_vendor: pandas df with number of subjects and sites per vendor
     """
 
-    # compute mean and std per vendor (GE, Philips, Siemens) for individual ROI/labels perlevel
+    # compute mean and sd values per vendor (GE, Philips, Siemens) for individual ROI/labels perlevel
     # initialize dict
     dict_vendor_mean = {}
     dict_vendor_sd = {}
@@ -371,11 +385,12 @@ def summary_per_vendor(df, metric):
 
     return df_vendor_mean, df_vendor_sd, df_vendor_mean_and_sd, df_vendor_cov, df_summary_vendor
 
-def generate_level_evolution_persite(df, df_summary_vendor,metric, path_output):
+def generate_level_evolution_persite(df, df_summary_vendor, metric, path_output):
     """
     Generate figure for each metric - level evolution (C2, C3, C4, C5) per ROI for individual sites
     :param df: pandas df with input data
-    :param metric: currently processed qMRI metric (e.g. FA, MD, MTsat,...)
+    :param: df_summary_vendor: pandas df with number of subjects and sites per vendor
+    :param metric: currently processed qMRI metric (e.g. dti_md)
     :param path_output: path where figures will be generated (manually entered -path-results path or current dir)
     :return:
     """
@@ -383,8 +398,6 @@ def generate_level_evolution_persite(df, df_summary_vendor,metric, path_output):
     site_sorted = df.sort_values(by=['vendor', 'model', 'site']).index.values
 
     fig, _ = plt.subplots(figsize=(17, 10))
-    # add master title for whole figure
-    fig.suptitle(metric_to_label[metric], fontsize=FONTSIZE)
     # add master title for whole figure
     fig.suptitle('{} for totally {} subjects across {} sites.'.format(metric_to_title[metric],
                                                                       df_summary_vendor['M'].sum() +
@@ -398,6 +411,7 @@ def generate_level_evolution_persite(df, df_summary_vendor,metric, path_output):
         # loop across roi/labels
         for index, label in enumerate(roi_to_label.keys()):
             # create individual subplots
+            # TODO - modify command below to be able to work with different number of ROIs
             ax = plt.subplot(2, 3, index + 1)
             mean_value = list()
             # loop across levels
@@ -463,11 +477,12 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     Generate figure for each metric - level evolution (C2, C3, C4, C5) per ROI for individual vendors
     :param df_vendor: pandas df with aggregated data pervendor
     :param df_summary_vendor: pandas df with number of subjects and sites per vendor
-    :param metric: currently processed qMRI metric (e.g. FA, MD, MTsat,...)
+    :param metric: currently processed qMRI metric (dti_fa)
     :param path_output: path where figures will be generated (manually entered -path-results path or current dir)
     :return:
     """
 
+    # optimize font size
     FONTSIZE = 20
     TICKSIZE = 15
     LEGENDSIZE = 11
@@ -484,25 +499,26 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
         # loop across roi/labels
         for index, label in enumerate(roi_to_label.keys()):
             # create individual subplots
+            # TODO - modify command below to be able to work with different number of ROIs
             ax = plt.subplot(2, 3, index + 1)
             # loop across levels
             y = list()      # mean values
-            e = list()      # std values
+            e = list()      # sd values
             for level in levels_to_label.keys():
                 # get mean value for given label (e.g, C2, C3, etc) and given label/roi (e.g., spinal cord etc.)
                 y.append(row[level,label][0])
-                # get std value for given label (e.g, C2, C3, etc) and given label/roi (e.g., spinal cord etc.)
+                # get sd value for given label (e.g, C2, C3, etc) and given label/roi (e.g., spinal cord etc.)
                 e.append(row[level, label][1])
 
-            # plot mean and std values pervendor for each level (C2, C3, C4, C5)
+            # plot mean and sd values pervendor for each level (C2, C3, C4, C5)
             x = [float(key) for key in levels_to_label]  # individual levels - 2,3,4,5
             plt.errorbar(x,
                          y,
                          e,
                          marker=vendor_to_marker[vendor],  # change marker symbol based on vendor
-                         markersize=10,  # size of marker symbol
-                         capsize=5,     # the length of the error bar caps
-                         alpha=0.5,  # transparency
+                         markersize=10,     # size of marker symbol
+                         capsize=5,         # the length of the error bar caps
+                         alpha=0.5,         # transparency
                          label=vendor)
             # rename xticks to C2, C3, C4, C5
             plt.xticks(x, levels_to_label.values(), fontsize=TICKSIZE)
@@ -596,7 +612,7 @@ def load_participants_file(path_participants):
 
 def fetch_subject(filename):
     """
-    Get subject from filename
+    Get subject ID from filename
     :param filename:
     :return: subject
     """
@@ -609,7 +625,7 @@ def remove_subject(subject, metric, dict_exclude_subj):
     Check if subject should be removed
     :param subject:
     :param metric:
-    :param dict_exclude_subj: dictonary with subjects to remove from analysis (due to bad data quality, etc.)
+    :param dict_exclude_subj: dictionary with subjects to exclude from analysis (due to bad data quality, etc.)
     :return: Bool
     """
     if metric in dict_exclude_subj.keys():
@@ -637,12 +653,12 @@ def get_parameters():
         '-participants-file',
         required=False,
         metavar='<fname>',
-        help='Path to .tsv file with participants characteristics.')
+        help='Path to .tsv file with participants characteristics (sex, age, ...).')
     parser.add_argument(
         '-config',
         required=False,
         metavar='<fname>',
-        help='Config yaml file listing images that you want to remove from processing.')
+        help='Path to yaml file listing subjects and sites that you want to exclude from the processing.')
 
     args = parser.parse_args()
     return args
@@ -758,8 +774,8 @@ def main():
         # ------------------------------------------------------------------
 
         # concatenate mean and std values
-        #df_vendor = pd.concat([df_vendor_mean, df_vendor_sd], axis=1)
-        #generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, path_output)
+        df_vendor = pd.concat([df_vendor_mean, df_vendor_sd], axis=1)
+        generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, path_output)
 
         # ------------------------------------------------------------------
         # generate per SITEs figure - level evolution per ROI for individual sites
