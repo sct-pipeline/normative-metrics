@@ -280,26 +280,26 @@ def summary_per_vendor(df, metric):
     :param df: pandas df with metric values per site
     :param metric: currently processed metric (e.g., dti_fa)
     :return: df_vendor_mean: pandas df with mean metric values per vendor
-    :return: df_vendor_std: pandas df with std metric values per vendor
+    :return: df_vendor_sd: pandas df with std metric values per vendor
     :return: df_summary_vendor: pandas df with number of subjects and sites per vendor
     """
 
     # compute mean and std per vendor (GE, Philips, Siemens) for individual ROI/labels perlevel
     # initialize dict
     dict_vendor_mean = {}
-    dict_vendor_std = {}
+    dict_vendor_sd = {}
     dict_vendor_cov = {}
     # loop across vendors
     for vendor in vendor_to_color.keys():
         # if this is a new vendor, initialize sub-dict
         dict_vendor_mean[vendor] = {}
-        dict_vendor_std[vendor] = {}
+        dict_vendor_sd[vendor] = {}
         dict_vendor_cov[vendor] = {}
         # loop across levels and ROI (e.g., '5', 'spinal cord'; '4', 'spinal cord'; ...)
         for label in list(df['mean']['amu'].keys()):        # <class 'tuple'>: (e.g., '5', 'ventral funiculi')
             # if this is a new label, initialize sub-dict
             dict_vendor_mean[vendor][label] = {}
-            dict_vendor_std[vendor][label] = {}
+            dict_vendor_sd[vendor][label] = {}
             dict_vendor_cov[vendor][label] = {}
             mean_values = list()
             # loop across sites for given vendor
@@ -309,15 +309,16 @@ def summary_per_vendor(df, metric):
             # compute mean from all sites' mean values for given vendor and insert it into dict
             dict_vendor_mean[vendor][label] = round(np.mean(mean_values),2)
             # compute std from all sites' mean values for given vendor and insert it into dict
-            dict_vendor_std[vendor][label] = round(np.std(mean_values),2)
+            dict_vendor_sd[vendor][label] = round(np.std(mean_values),2)
             # compute COV in %
             dict_vendor_cov[vendor][label] = round((np.std(mean_values)/np.mean(mean_values))*100,2)
 
 
     # convert dict to pandas df for easy csv save
     df_vendor_mean = pd.DataFrame.from_dict(dict_vendor_mean, orient='index')
-    df_vendor_std = pd.DataFrame.from_dict(dict_vendor_std, orient='index')
+    df_vendor_sd = pd.DataFrame.from_dict(dict_vendor_sd, orient='index')
     df_vendor_cov = pd.DataFrame.from_dict(dict_vendor_cov, orient='index')
+    df_vendor_mean_and_sd = pd.DataFrame.from_dict(dict_vendor_mean_and_sd, orient='index')
 
     # find out which ROI/label and vertebral level has the largest COV and print it to the log
     logger.info('')    # print empty line to log
@@ -728,9 +729,7 @@ def main():
         logger.info('\nCreated: {}\n'.format(fname_csv_per_vendor_mean))
         fname_csv_per_vendor_cov = os.path.join(os.getcwd(), metric) + '_cov_per_vendors.csv'
         df_vendor_cov.to_csv(fname_csv_per_vendor_cov)
-        logger.info('\nCreated: {}\n'.format(fname_csv_per_vendor_cov))
-
-        logger.info(df_vendor_mean.head())
+        logger.info('\nCreated: {}'.format(fname_csv_per_vendor_cov))
 
         # ------------------------------------------------------------------
         # compute age and sex per vendor
@@ -747,14 +746,14 @@ def main():
         # ------------------------------------------------------------------
 
         # concatenate mean and std values
-        df_vendor = pd.concat([df_vendor_mean, df_vendor_std], axis=1)
-        generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, path_output)
+        #df_vendor = pd.concat([df_vendor_mean, df_vendor_sd], axis=1)
+        #generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, path_output)
 
         # ------------------------------------------------------------------
         # generate per SITEs figure - level evolution per ROI for individual sites
         # ------------------------------------------------------------------
 
-        generate_level_evolution_persite(df, metric, path_output)
+        #generate_level_evolution_persite(df, df_summary_vendor, metric, path_output)
 
         print('\n Analysis of {} is completed.'.format(csv_file))
 
