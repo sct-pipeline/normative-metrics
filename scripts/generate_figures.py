@@ -313,6 +313,18 @@ def summary_per_vendor(df, metric):
             # compute COV in %
             dict_vendor_cov[vendor][label] = round((np.std(mean_values)/np.mean(mean_values))*100,2)
 
+    # Create dict with mean and SD as a single string (e.g, '0.73+-0.07') for each level and ROI
+    # Great for saving as a .csv file and importing as a table into Excel
+    # This dict is then converted to pandas DF and saved as csv table
+    dict_vendor_mean_and_sd = {}    # initialize dict
+    for vendor in dict_vendor_mean.keys():      # loop across vendors
+        dict_vendor_mean_and_sd[vendor] = {}        # initialize sub-dict for each vendor
+        for key, value in dict_vendor_mean[vendor].items():     # loop across items (e.g., '5', 'spinal cord')
+            # combine mean and SD values into single strings (e.g., '0.73+-0.07')
+            dict_vendor_mean_and_sd[vendor][key] = (str(dict_vendor_mean[vendor][key]) +        # mean value
+                                                    '\u00B1' +                                   # +- sign
+                                                    str(dict_vendor_sd[vendor][key]))            # sd value
+
 
     # convert dict to pandas df for easy csv save
     df_vendor_mean = pd.DataFrame.from_dict(dict_vendor_mean, orient='index')
@@ -357,7 +369,7 @@ def summary_per_vendor(df, metric):
                                    pd.DataFrame.from_dict(dict_sites_per_vendor, orient='index')], axis=1, sort=False)
     df_summary_vendor.columns = ['num. of sub. per vendor', 'num. of sites per vendor']
 
-    return df_vendor_mean, df_vendor_std, df_vendor_cov, df_summary_vendor
+    return df_vendor_mean, df_vendor_sd, df_vendor_mean_and_sd, df_vendor_cov, df_summary_vendor
 
 def generate_level_evolution_persite(df, df_summary_vendor,metric, path_output):
     """
@@ -722,11 +734,11 @@ def main():
         # ------------------------------------------------------------------
         # compute per vendor summary
         # ------------------------------------------------------------------
-        df_vendor_mean, df_vendor_std, df_vendor_cov, df_summary_vendor = summary_per_vendor(df, metric)
-        #  Save mean and cov as .csv files
-        fname_csv_per_vendor_mean = os.path.join(os.getcwd(), metric) + '_mean_per_vendors.csv'
-        df_vendor_mean.to_csv(fname_csv_per_vendor_mean)
-        logger.info('\nCreated: {}\n'.format(fname_csv_per_vendor_mean))
+        df_vendor_mean, df_vendor_sd, df_vendor_mean_and_sd, df_vendor_cov, df_summary_vendor = summary_per_vendor(df, metric)
+        #  Save mean_and_sd tables and cov as a .csv files
+        fname_csv_per_vendor_mean_sd = os.path.join(os.getcwd(), metric) + '_mean_and_sd_per_vendors.csv'
+        df_vendor_mean_and_sd.to_csv(fname_csv_per_vendor_mean_sd)
+        logger.info('\nCreated: {}'.format(fname_csv_per_vendor_mean_sd))
         fname_csv_per_vendor_cov = os.path.join(os.getcwd(), metric) + '_cov_per_vendors.csv'
         df_vendor_cov.to_csv(fname_csv_per_vendor_cov)
         logger.info('\nCreated: {}'.format(fname_csv_per_vendor_cov))
