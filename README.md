@@ -1,10 +1,10 @@
 # Normative qMRI metrics
 
-Set of scripts for computing quantitative MRI (qMRI) metrics from diffusion weighted (DWI) and magnetic transfer (MT) spinal cord MRI data.
+Set of scripts for computing of quantitative MRI (qMRI) metrics from diffusion-weighted (DWI/dMRI) and magnetic transfer (MT) spinal cord MRI data.
 
 ## Motivation
 
-To compute normative qMRI metrics from large cohort of multi-center multi-vendor healthy subjects for various spinal cord ROI based on PAM50 atlas and analyze their variability per individual vertebral levels and also per individual vendors.
+To compute the normative qMRI metrics from a large cohort of healthy subjects scanned across multiple sites for various spinal cord ROI based on PAM50 atlas and analyze their variability per individual vertebral levels (C2-C5) and also per individual vendors (Siemens, Philips, GE).
 
 ## Data 
 
