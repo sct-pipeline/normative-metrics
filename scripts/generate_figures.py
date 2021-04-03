@@ -105,9 +105,9 @@ metric_to_title = {
 # ylabel for subplots
 metric_to_label = {
     'dti_fa': 'FA',
-    'dti_md': 'MD [$mm^2.s^{-1}$]',
-    'dti_ad': 'AD [$mm^2.s^{-1}$]',
-    'dti_rd': 'RD [$mm^2.s^{-1}$]',
+    'dti_md': 'MD [$× 10^{-3} mm^{2}/s$]',
+    'dti_ad': 'AD [$× 10^{-3} mm^{2}/s$]',
+    'dti_rd': 'RD [$× 10^{-3} mm^{2}/s$]',
     'mtr': 'MTR [%]',
     'mtsat': 'MTsat [%]',
     }
