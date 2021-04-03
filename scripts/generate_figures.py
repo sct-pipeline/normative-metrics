@@ -100,7 +100,7 @@ metric_to_title = {
     'dti_fa': 'Fractional anisotropy (FA)',
     'dti_md': 'Mean diffusivity (MD)',
     'dti_ad': 'Axial diffusivity (AD)',
-    'dti_rd': 'Radial diffusivity (MD)',
+    'dti_rd': 'Radial diffusivity (RD)',
     'mtr': 'Magnetization transfer ratio (MTR)',
     'mtsat': 'Magnetization transfer saturation (MTsat)',
     }
