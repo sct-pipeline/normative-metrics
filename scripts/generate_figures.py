@@ -46,7 +46,7 @@ log_line = '========================================================'
 
 # color to assign to each MRI model for the figure
 vendor_to_color = {
-    'GE': 'black',
+    'GE': 'orange',
     'Philips': 'dodgerblue',
     'Siemens': 'limegreen',
     }
@@ -113,6 +113,7 @@ metric_to_label = {
     }
 
 # titles for individual subplots
+# TODO - add also another ROIs/labels to the dict below
 roi_to_label = {
     'spinal cord': 'Spinal cord',
     'white matter': 'White matter',
@@ -485,68 +486,97 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     # optimize font size
     FONTSIZE = 20
     TICKSIZE = 15
-    LEGENDSIZE = 11
+    LEGENDSIZE = 12
+    # transparency of artists
+    ALPHA = 0.6
 
-    fig, _ = plt.subplots(figsize=(14, 7))
+    # Initialize figure for subplots
+    # TODO - modify command below to allow working with different number of ROIs/labels
+    fig, axs = plt.subplots(2, 3, figsize=(14, 8), sharex=True, sharey=True)
+    # Flatten 2D array into 1D to allow iteration by loop
+    axs = axs.ravel()
+
     # add master title for whole figure
-    fig.suptitle('{} for totally {} subjects across {} vendors.'.format(metric_to_title[metric],
-                                                                        df_summary_vendor['M'].sum() +
-                                                                        df_summary_vendor['F'].sum(),
-                                                                        len(vendor_to_color)), fontsize=FONTSIZE)
+    fig.suptitle('{} for {} subjects across {} vendors'.
+                 format(metric_to_title[metric],
+                        df_summary_vendor['M'].sum() +
+                        df_summary_vendor['F'].sum(),
+                        len(vendor_to_color)),
+                 fontsize=FONTSIZE, fontweight='bold')
 
-    # loop across vendors
+    # loop across vendors (Siemens, Philips, ...)
     for vendor, row in df_vendor.iterrows():
-        # loop across roi/labels
+        # loop across roi/labels (spinal cord, white matter, ...)
         for index, label in enumerate(roi_to_label.keys()):
-            # create individual subplots
-            # TODO - modify command below to be able to work with different number of ROIs
-            ax = plt.subplot(2, 3, index + 1)
-            # loop across levels
+
             y = list()      # mean values
             e = list()      # sd values
+            # loop across levels (C2, C3, ...)
             for level in levels_to_label.keys():
-                # get mean value for given label (e.g, C2, C3, etc) and given label/roi (e.g., spinal cord etc.)
+                # get mean value for given label (e.g, C2, ...) and given label/roi (e.g., spinal cord, ...)
                 y.append(row[level,label][0])
-                # get sd value for given label (e.g, C2, C3, etc) and given label/roi (e.g., spinal cord etc.)
+                # get sd value for given label (e.g, C2, ...) and given label/roi (e.g., spinal cord, ...)
                 e.append(row[level, label][1])
 
             # plot mean and sd values pervendor for each level (C2, C3, C4, C5)
             x = [float(key) for key in levels_to_label]  # individual levels - 2,3,4,5
-            plt.errorbar(x,
-                         y,
-                         e,
-                         marker=vendor_to_marker[vendor],  # change marker symbol based on vendor
-                         markersize=10,     # size of marker symbol
-                         capsize=5,         # the length of the error bar caps
-                         alpha=0.5,         # transparency
-                         label=vendor)
+            axs[index].errorbar(x,      # vertebral levels
+                                y,      # mean values for currently processed qMRI metric (e.g., FA, ...)
+                                e,      # sd values for currently processed qMRI metric (e.g., FA, ...)
+                                marker=vendor_to_marker[vendor],  # change marker symbol based on vendor
+                                markersize=10,     # size of marker symbol
+                                capsize=5,         # the length of the error bar caps
+                                alpha=ALPHA,         # transparency
+                                color=vendor_to_color[vendor],
+                                label=vendor)      # label for legend
             # rename xticks to C2, C3, C4, C5
-            plt.xticks(x, levels_to_label.values(), fontsize=TICKSIZE)
-            # Increase site if yticks
-            plt.yticks(fontsize=TICKSIZE)
+            #axs[index].xticks(x, levels_to_label.values(), fontsize=TICKSIZE)
+            # Rename x-tick labels to C2, C3, C4, C5
+            plt.setp(axs[index], xticks=x, xticklabels=levels_to_label.values())
+            # Increase size of x- and y-ticks
+            plt.setp(axs[index].xaxis.get_majorticklabels(), fontsize=TICKSIZE)
+            plt.setp(axs[index].yaxis.get_majorticklabels(), fontsize=TICKSIZE)
             # add grid
-            plt.grid(axis='y', linestyle="--")
-            ax.set_ylabel(metric_to_label[metric], fontsize=TICKSIZE)
+            axs[index].grid(axis='y', linestyle="--")
             # add title to individual subpolots (i.e., ROI/label)
-            plt.title(roi_to_label[label], fontsize=FONTSIZE)
+            axs[index].set_title(roi_to_label[label], fontsize=FONTSIZE)
+            # set y-label (FA, MD, ...) only once for each row
+            # TODO - number of indexes will have to be fixed when number of ROIs/labels will be changed
+            if index == 0 or index == 3:
+                axs[index].set_ylabel(metric_to_label[metric], fontsize=TICKSIZE)
 
-            # show legend only one time (in right up corner)
-            if index == 2:
-                # place legend next to last subplot
-                leg = plt.legend(bbox_to_anchor=(1.1, 1.03), fontsize=LEGENDSIZE)
-                # insert number of subjects and number of sites per vendor into legend
-                # loop across vendors
-                for num in range(0,len(leg.get_texts())):
-                    leg.get_texts()[num].set_text('{}: {} subjects, {} sites'.format(df_summary_vendor.index.values[num],
-                                                                                     df_summary_vendor.iloc[num, 0],
-                                                                                     df_summary_vendor.iloc[num, 1]))
+
+    # LEGEND - create custom legend
+    # https://stackoverflow.com/questions/9834452/how-do-i-make-a-single-legend-for-many-subplots-with-matplotlib
+    # https://stackoverflow.com/questions/4700614/how-to-put-the-legend-out-of-the-plot
+    lines = list()      # initialize list for individual symbols in the legend
+    labels = list()     # initialize list for individual text labels in the legend
+    # loop across vendors (Siemens, Philips, ...)
+    for num, vendor in enumerate(vendor_to_color):
+        lines.append(Line2D([0], [0], color=vendor_to_color[vendor],
+                            marker=vendor_to_marker[vendor],
+                            markersize=LEGENDSIZE,
+                            alpha=ALPHA,
+                            linestyle=''))
+        labels.append('{}: {} subjects, {} sites'.format(df_summary_vendor.index.values[num],
+                                                         df_summary_vendor.iloc[num, 0],
+                                                         df_summary_vendor.iloc[num, 1]))
 
     # Move subplots closer to each other
     plt.subplots_adjust(wspace=-0.5)
     plt.tight_layout()
+
+    # Insert legend below subplots, NB - this line has to be below the plt.tight_layout()
+    legend = fig.legend(lines, labels, loc='lower left', bbox_to_anchor=(0.2, 0),
+                        bbox_transform=plt.gcf().transFigure, ncol=len(lines), fontsize=LEGENDSIZE)
+    # Change box's frame color to black (to be same as box around linear fit equation)
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
+
     # tight layout of whole figure and shift master title up
     fig.tight_layout()
-    fig.subplots_adjust(top=0.88)
+    fig.subplots_adjust(top=0.88, bottom=0.1)
+
     # save figure
     fname_fig = os.path.join(path_output, metric + '_per_vendor.png')
     plt.savefig(fname_fig, dpi=200)
