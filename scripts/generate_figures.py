@@ -94,12 +94,12 @@ metric_to_abbreviation = {
 
 # master titles for figures with subplots
 metric_to_title = {
-    'dti_fa': 'Fractional anisotropy',
-    'dti_md': 'Mean diffusivity',
-    'dti_ad': 'Axial diffusivity',
-    'dti_rd': 'Radial diffusivity',
-    'mtr': 'Magnetization transfer ratio',
-    'mtsat': 'Magnetization transfer saturation',
+    'dti_fa': 'Fractional anisotropy (FA)',
+    'dti_md': 'Mean diffusivity (MD)',
+    'dti_ad': 'Axial diffusivity (AD)',
+    'dti_rd': 'Radial diffusivity (MD)',
+    'mtr': 'Magnetization transfer ratio (MTR)',
+    'mtsat': 'Magnetization transfer saturation (MTsat)',
     }
 
 # ylabel for subplots
