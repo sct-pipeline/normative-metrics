@@ -30,10 +30,13 @@ import pandas as pd
 import yaml
 
 import numpy as np
-from collections import defaultdict
-from scipy.stats import f_oneway
 import matplotlib.pyplot as plt
 import logging
+
+from collections import defaultdict
+from scipy.stats import f_oneway
+from matplotlib.lines import Line2D
+
 
 # Initialize logging
 logger = logging.getLogger(__name__)
