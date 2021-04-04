@@ -572,7 +572,7 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     # Insert legend below subplots, NB - this line has to be below the plt.tight_layout()
     legend = fig.legend(lines, labels, loc='lower left', bbox_to_anchor=(0.2, 0),
                         bbox_transform=plt.gcf().transFigure, ncol=len(lines), fontsize=LEGENDSIZE)
-    # Change box's frame color to black (to be same as box around linear fit equation)
+    # Change box's frame color to black
     frame = legend.get_frame()
     frame.set_edgecolor('black')
 
