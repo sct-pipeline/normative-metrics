@@ -475,7 +475,7 @@ def generate_level_evolution_persite(df, df_summary_vendor, metric, path_output)
     fig.tight_layout()
     fig.subplots_adjust(top=0.88)
     # save figure
-    fname_fig = os.path.join(path_output, metric + '_per_sites.png')
+    fname_fig = os.path.join(path_output, 'figures', metric + '_per_sites.png')
     plt.savefig(fname_fig, dpi=200)
     logger.info('\nCreated: {}\n'.format(fname_fig))
 
@@ -587,7 +587,7 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     fig.subplots_adjust(top=0.88, bottom=0.1)
 
     # save figure
-    fname_fig = os.path.join(path_output, metric + '_per_vendor.png')
+    fname_fig = os.path.join(path_output, 'figures', metric + '_per_vendor.png')
     plt.savefig(fname_fig, dpi=200)
     logger.info('\nCreated: ' + fname_fig)
 
@@ -743,7 +743,15 @@ def main():
         print("-path-results flag has not been set. Assuming current directory as a directory with *csv files.")
         os.chdir(path_output)
 
-    # fetch where is participants.tsv file located
+    # create directory figures where created figures will be saved
+    if not os.path.exists(os.path.join(path_output, 'figures')):
+        os.makedirs(os.path.join(path_output, 'figures'))
+
+    # create directory tables where created tables will be saved
+    if not os.path.exists(os.path.join(path_output, 'tables')):
+        os.makedirs(os.path.join(path_output, 'tables'))
+
+    # fetch where participants.tsv file is located
     if args.participants_file is not None:
         if os.path.isfile(args.participants_file):
             path_participants = args.participants_file
@@ -796,10 +804,10 @@ def main():
         # ------------------------------------------------------------------
         df_vendor_mean, df_vendor_sd, df_vendor_mean_and_sd, df_vendor_cov, df_summary_vendor = summary_per_vendor(df, metric)
         #  Save mean_and_sd tables and cov as a .csv files
-        fname_csv_per_vendor_mean_sd = os.path.join(os.getcwd(), metric) + '_mean_and_sd_per_vendors.csv'
+        fname_csv_per_vendor_mean_sd = os.path.join(os.getcwd(), 'tables', metric + '_mean_and_sd_per_vendors.csv')
         df_vendor_mean_and_sd.to_csv(fname_csv_per_vendor_mean_sd)
         logger.info('\nCreated: {}'.format(fname_csv_per_vendor_mean_sd))
-        fname_csv_per_vendor_cov = os.path.join(os.getcwd(), metric) + '_cov_per_vendors.csv'
+        fname_csv_per_vendor_cov = os.path.join(os.getcwd(), 'tables', metric + '_cov_per_vendors.csv')
         df_vendor_cov.to_csv(fname_csv_per_vendor_cov)
         logger.info('\nCreated: {}'.format(fname_csv_per_vendor_cov))
 
