@@ -729,7 +729,7 @@ def main():
         # initialize empty dict if no config yml file is passed
         dict_exclude_subj = dict()
 
-    # change directory to where are .csv files are located (and where figures will be generated)
+    # change directory to where are perlevel *.csv files located
     if args.path_results is not None:
         if os.path.isdir(args.path_results):
             path_output = args.path_results
@@ -738,7 +738,7 @@ def main():
         else:
             raise FileNotFoundError("Directory '{}' was not found.".format(args.path_results))
     else:
-        # Stay in current directory (assuming it is results directory)
+        # stay in the current directory (assuming it is results directory)
         path_output = os.getcwd()
         print("-path-results flag has not been set. Assuming current directory as a directory with *csv files.")
         os.chdir(path_output)
@@ -758,7 +758,7 @@ def main():
         else:
             raise FileNotFoundError("Participants file '{}' was not found.".format(args.participants_file))
     else:
-        # if not passsed, assuming it is located in same dir as a *csv files
+        # if participants.tsv is not passsed, assuming it is located in same dir as a *csv files
         path_participants = os.path.join(os.getcwd(), 'participants.tsv')
 
     # fetch perlevel .csv files
@@ -768,7 +768,7 @@ def main():
         raise RuntimeError("No *.csv files were found in the current directory. You can specify directory with *.csv "
                            "files by -path-results flag.")
 
-    # Dump log file there
+    # dump log file there
     if os.path.exists(FNAME_LOG):
         os.remove(FNAME_LOG)
     fh = logging.FileHandler(os.path.join(os.path.abspath(os.curdir), FNAME_LOG))
