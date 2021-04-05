@@ -1,9 +1,10 @@
 #!/usr/bin/env python
+
 #
-# Generate figures and statistics for individual qMRI metrics (FA, MD, AD, RD, MTR, MTsat) for different labels/ROIs
-# (SC, WM, GM, ...) along individual cervical levels (C2, C3, C4, C5) pervendor and persite
+# Generate figures and compute statistics for individual qMRI metrics (FA, MD, AD, RD, MTR, MTsat) for different
+# labels/ROIs (SC, WM, GM, ...) along individual cervical levels (C2, C3, C4, C5) pervendor and persite
 #
-# USAGE (run this script in the directory with perlevel *csv files, i.e. "results/perlevel" directory):
+# USAGE:
 #
 #   python generate_figures.py
 #   -path-results ~/spineGeneric-multi-subject_results/results/perlevel
@@ -11,12 +12,13 @@
 #   -participants-file ~/spineGeneric-multi-subject_results/results/participants.tsv
 #
 # Input arguments:
-#   -path-results           - directory with *.csv files
-#   -config                 - input yml config file with subjects to exclude (e.g., due to back data quality)
+#   -path-results           - directory with perlevel *.csv files (computed by extract_normative_metrics.py script)
+#   -config                 - input yml config file with subjects to exclude (e.g., due to bad data quality, noise, ...)
 #   -participants-file      - input .tsv file with participants characteristics (sex, age, ...)
 #
 # Inspired by - https://github.com/sct-pipeline/spine-generic/blob/master/processing/generate_figure.py
 # Authors: Jan Valosek, Julien Cohen-Adad
+#
 
 # TODO - combine this script (and probably also whole repo) with spine-generic repo
 
@@ -30,10 +32,13 @@ import pandas as pd
 import yaml
 
 import numpy as np
-from collections import defaultdict
-from scipy.stats import f_oneway
 import matplotlib.pyplot as plt
 import logging
+
+from collections import defaultdict
+from scipy.stats import f_oneway
+from matplotlib.lines import Line2D
+
 
 # Initialize logging
 logger = logging.getLogger(__name__)
@@ -46,7 +51,7 @@ log_line = '========================================================'
 
 # color to assign to each MRI model for the figure
 vendor_to_color = {
-    'GE': 'black',
+    'GE': 'orange',
     'Philips': 'dodgerblue',
     'Siemens': 'limegreen',
     }
@@ -94,25 +99,26 @@ metric_to_abbreviation = {
 
 # master titles for figures with subplots
 metric_to_title = {
-    'dti_fa': 'Fractional anisotropy',
-    'dti_md': 'Mean diffusivity',
-    'dti_ad': 'Axial diffusivity',
-    'dti_rd': 'Radial diffusivity',
-    'mtr': 'Magnetization transfer ratio',
-    'mtsat': 'Magnetization transfer saturation',
+    'dti_fa': 'Fractional anisotropy (FA)',
+    'dti_md': 'Mean diffusivity (MD)',
+    'dti_ad': 'Axial diffusivity (AD)',
+    'dti_rd': 'Radial diffusivity (RD)',
+    'mtr': 'Magnetization transfer ratio (MTR)',
+    'mtsat': 'Magnetization transfer saturation (MTsat)',
     }
 
 # ylabel for subplots
 metric_to_label = {
     'dti_fa': 'FA',
-    'dti_md': 'MD [$mm^2.s^{-1}$]',
-    'dti_ad': 'AD [$mm^2.s^{-1}$]',
-    'dti_rd': 'RD [$mm^2.s^{-1}$]',
+    'dti_md': 'MD [$× 10^{-3} mm^{2}/s$]',
+    'dti_ad': 'AD [$× 10^{-3} mm^{2}/s$]',
+    'dti_rd': 'RD [$× 10^{-3} mm^{2}/s$]',
     'mtr': 'MTR [%]',
     'mtsat': 'MTsat [%]',
     }
 
 # titles for individual subplots
+# TODO - add also another ROIs/labels to the dict below
 roi_to_label = {
     'spinal cord': 'Spinal cord',
     'white matter': 'White matter',
@@ -144,6 +150,7 @@ scaling_factor = {
 FONTSIZE = 15
 TICKSIZE = 10
 LABELSIZE = 15
+
 
 # TODO - modify this function to save metrics for individual ROI and levels
 def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participants):
@@ -285,6 +292,7 @@ def aggregate_age_and_sex_per_vendor(path_participants, subjects_processed):
 
     return df_age, df_sex
 
+
 def summary_per_vendor(df, metric):
     """
     Compute mean, sd and cov values pervendor (Siemens, GE, Philips) for individual labels/ROIs (SC, WM, GM, ...)
@@ -385,6 +393,7 @@ def summary_per_vendor(df, metric):
 
     return df_vendor_mean, df_vendor_sd, df_vendor_mean_and_sd, df_vendor_cov, df_summary_vendor
 
+
 def generate_level_evolution_persite(df, df_summary_vendor, metric, path_output):
     """
     Generate figure for each metric - level evolution (C2, C3, C4, C5) per ROI for individual sites
@@ -466,11 +475,12 @@ def generate_level_evolution_persite(df, df_summary_vendor, metric, path_output)
     fig.tight_layout()
     fig.subplots_adjust(top=0.88)
     # save figure
-    fname_fig = os.path.join(path_output, metric + '_per_sites.png')
+    fname_fig = os.path.join(path_output, 'figures', metric + '_per_sites.png')
     plt.savefig(fname_fig, dpi=200)
     logger.info('\nCreated: {}\n'.format(fname_fig))
 
     # plt.show()
+
 
 def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, path_output):
     """
@@ -485,72 +495,102 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     # optimize font size
     FONTSIZE = 20
     TICKSIZE = 15
-    LEGENDSIZE = 11
+    LEGENDSIZE = 12
+    # transparency of artists
+    ALPHA = 0.6
 
-    fig, _ = plt.subplots(figsize=(14, 7))
+    # Initialize figure for subplots
+    # TODO - modify command below to allow working with different number of ROIs/labels
+    fig, axs = plt.subplots(2, 3, figsize=(14, 8), sharex=True, sharey=True)
+    # Flatten 2D array into 1D to allow iteration by loop
+    axs = axs.ravel()
+
     # add master title for whole figure
-    fig.suptitle('{} for totally {} subjects across {} vendors.'.format(metric_to_title[metric],
-                                                                        df_summary_vendor['M'].sum() +
-                                                                        df_summary_vendor['F'].sum(),
-                                                                        len(vendor_to_color)), fontsize=FONTSIZE)
+    fig.suptitle('{} for {} subjects across {} vendors'.
+                 format(metric_to_title[metric],
+                        df_summary_vendor['M'].sum() +
+                        df_summary_vendor['F'].sum(),
+                        len(vendor_to_color)),
+                 fontsize=FONTSIZE, fontweight='bold')
 
-    # loop across vendors
+    # loop across vendors (Siemens, Philips, ...)
     for vendor, row in df_vendor.iterrows():
-        # loop across roi/labels
+        # loop across roi/labels (spinal cord, white matter, ...)
         for index, label in enumerate(roi_to_label.keys()):
-            # create individual subplots
-            # TODO - modify command below to be able to work with different number of ROIs
-            ax = plt.subplot(2, 3, index + 1)
-            # loop across levels
+
             y = list()      # mean values
             e = list()      # sd values
+            # loop across levels (C2, C3, ...)
             for level in levels_to_label.keys():
-                # get mean value for given label (e.g, C2, C3, etc) and given label/roi (e.g., spinal cord etc.)
+                # get mean value for given label (e.g, C2, ...) and given label/roi (e.g., spinal cord, ...)
                 y.append(row[level,label][0])
-                # get sd value for given label (e.g, C2, C3, etc) and given label/roi (e.g., spinal cord etc.)
+                # get sd value for given label (e.g, C2, ...) and given label/roi (e.g., spinal cord, ...)
                 e.append(row[level, label][1])
 
             # plot mean and sd values pervendor for each level (C2, C3, C4, C5)
             x = [float(key) for key in levels_to_label]  # individual levels - 2,3,4,5
-            plt.errorbar(x,
-                         y,
-                         e,
-                         marker=vendor_to_marker[vendor],  # change marker symbol based on vendor
-                         markersize=10,     # size of marker symbol
-                         capsize=5,         # the length of the error bar caps
-                         alpha=0.5,         # transparency
-                         label=vendor)
+            axs[index].errorbar(x,      # vertebral levels
+                                y,      # mean values for currently processed qMRI metric (e.g., FA, ...)
+                                e,      # sd values for currently processed qMRI metric (e.g., FA, ...)
+                                marker=vendor_to_marker[vendor],  # change marker symbol based on vendor
+                                markersize=10,     # size of marker symbol
+                                capsize=5,         # the length of the error bar caps
+                                alpha=ALPHA,         # transparency
+                                color=vendor_to_color[vendor],
+                                label=vendor)      # label for legend
             # rename xticks to C2, C3, C4, C5
-            plt.xticks(x, levels_to_label.values(), fontsize=TICKSIZE)
-            # Increase site if yticks
-            plt.yticks(fontsize=TICKSIZE)
+            #axs[index].xticks(x, levels_to_label.values(), fontsize=TICKSIZE)
+            # Rename x-tick labels to C2, C3, C4, C5
+            plt.setp(axs[index], xticks=x, xticklabels=levels_to_label.values())
+            # Increase size of x- and y-ticks
+            plt.setp(axs[index].xaxis.get_majorticklabels(), fontsize=TICKSIZE)
+            plt.setp(axs[index].yaxis.get_majorticklabels(), fontsize=TICKSIZE)
             # add grid
-            plt.grid(axis='y', linestyle="--")
-            ax.set_ylabel(metric_to_label[metric], fontsize=TICKSIZE)
+            axs[index].grid(axis='y', linestyle="--")
             # add title to individual subpolots (i.e., ROI/label)
-            plt.title(roi_to_label[label], fontsize=FONTSIZE)
+            axs[index].set_title(roi_to_label[label], fontsize=FONTSIZE)
+            # set y-label (FA, MD, ...) only once for each row
+            # TODO - number of indexes will have to be fixed when number of ROIs/labels will be changed
+            if index == 0 or index == 3:
+                axs[index].set_ylabel(metric_to_label[metric], fontsize=TICKSIZE)
 
-            # show legend only one time (in right up corner)
-            if index == 2:
-                # place legend next to last subplot
-                leg = plt.legend(bbox_to_anchor=(1.1, 1.03), fontsize=LEGENDSIZE)
-                # insert number of subjects and number of sites per vendor into legend
-                # loop across vendors
-                for num in range(0,len(leg.get_texts())):
-                    leg.get_texts()[num].set_text('{}: {} subjects, {} sites'.format(df_summary_vendor.index.values[num],
-                                                                                     df_summary_vendor.iloc[num, 0],
-                                                                                     df_summary_vendor.iloc[num, 1]))
+
+    # LEGEND - create custom legend
+    # https://stackoverflow.com/questions/9834452/how-do-i-make-a-single-legend-for-many-subplots-with-matplotlib
+    # https://stackoverflow.com/questions/4700614/how-to-put-the-legend-out-of-the-plot
+    lines = list()      # initialize list for individual symbols in the legend
+    labels = list()     # initialize list for individual text labels in the legend
+    # loop across vendors (Siemens, Philips, ...)
+    for num, vendor in enumerate(vendor_to_color):
+        lines.append(Line2D([0], [0], color=vendor_to_color[vendor],
+                            marker=vendor_to_marker[vendor],
+                            markersize=LEGENDSIZE,
+                            alpha=ALPHA,
+                            linestyle=''))
+        labels.append('{}: {} subjects, {} sites'.format(df_summary_vendor.index.values[num],
+                                                         df_summary_vendor.iloc[num, 0],
+                                                         df_summary_vendor.iloc[num, 1]))
 
     # Move subplots closer to each other
     plt.subplots_adjust(wspace=-0.5)
     plt.tight_layout()
+
+    # Insert legend below subplots, NB - this line has to be below the plt.tight_layout()
+    legend = fig.legend(lines, labels, loc='lower left', bbox_to_anchor=(0.2, 0),
+                        bbox_transform=plt.gcf().transFigure, ncol=len(lines), fontsize=LEGENDSIZE)
+    # Change box's frame color to black
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
+
     # tight layout of whole figure and shift master title up
     fig.tight_layout()
-    fig.subplots_adjust(top=0.88)
+    fig.subplots_adjust(top=0.88, bottom=0.1)
+
     # save figure
-    fname_fig = os.path.join(path_output, metric + '_per_vendor.png')
+    fname_fig = os.path.join(path_output, 'figures', metric + '_per_vendor.png')
     plt.savefig(fname_fig, dpi=200)
     logger.info('\nCreated: ' + fname_fig)
+
 
 def format_pvalue(p_value, alpha=0.05, include_equal=True):
     """
@@ -610,6 +650,7 @@ def load_participants_file(path_participants):
 
     return participants_df
 
+
 def fetch_subject(filename):
     """
     Get subject ID from filename
@@ -619,6 +660,7 @@ def fetch_subject(filename):
     path, file = os.path.split(filename)
     subject = path.split(os.sep)[-2]
     return subject
+
 
 def remove_subject(subject, metric, dict_exclude_subj):
     """
@@ -636,6 +678,7 @@ def remove_subject(subject, metric, dict_exclude_subj):
         elif subject[4:-2] in dict_exclude_subj[metric]:    # subject[4:-2] extract only site from subject
             return True
     return False
+
 
 def get_parameters():
     parser = argparse.ArgumentParser(
@@ -663,6 +706,7 @@ def get_parameters():
     args = parser.parse_args()
     return args
 
+
 def main():
 
     args = get_parameters()
@@ -685,7 +729,7 @@ def main():
         # initialize empty dict if no config yml file is passed
         dict_exclude_subj = dict()
 
-    # change directory to where are .csv files are located (and where figures will be generated)
+    # change directory to where are perlevel *.csv files located
     if args.path_results is not None:
         if os.path.isdir(args.path_results):
             path_output = args.path_results
@@ -694,19 +738,27 @@ def main():
         else:
             raise FileNotFoundError("Directory '{}' was not found.".format(args.path_results))
     else:
-        # Stay in current directory (assuming it is results directory)
+        # stay in the current directory (assuming it is results directory)
         path_output = os.getcwd()
         print("-path-results flag has not been set. Assuming current directory as a directory with *csv files.")
         os.chdir(path_output)
 
-    # fetch where is participants.tsv file located
+    # create directory figures where created figures will be saved
+    if not os.path.exists(os.path.join(path_output, 'figures')):
+        os.makedirs(os.path.join(path_output, 'figures'))
+
+    # create directory tables where created tables will be saved
+    if not os.path.exists(os.path.join(path_output, 'tables')):
+        os.makedirs(os.path.join(path_output, 'tables'))
+
+    # fetch where participants.tsv file is located
     if args.participants_file is not None:
         if os.path.isfile(args.participants_file):
             path_participants = args.participants_file
         else:
             raise FileNotFoundError("Participants file '{}' was not found.".format(args.participants_file))
     else:
-        # if not passsed, assuming it is located in same dir as a *csv files
+        # if participants.tsv is not passsed, assuming it is located in same dir as a *csv files
         path_participants = os.path.join(os.getcwd(), 'participants.tsv')
 
     # fetch perlevel .csv files
@@ -716,7 +768,7 @@ def main():
         raise RuntimeError("No *.csv files were found in the current directory. You can specify directory with *.csv "
                            "files by -path-results flag.")
 
-    # Dump log file there
+    # dump log file there
     if os.path.exists(FNAME_LOG):
         os.remove(FNAME_LOG)
     fh = logging.FileHandler(os.path.join(os.path.abspath(os.curdir), FNAME_LOG))
@@ -752,10 +804,10 @@ def main():
         # ------------------------------------------------------------------
         df_vendor_mean, df_vendor_sd, df_vendor_mean_and_sd, df_vendor_cov, df_summary_vendor = summary_per_vendor(df, metric)
         #  Save mean_and_sd tables and cov as a .csv files
-        fname_csv_per_vendor_mean_sd = os.path.join(os.getcwd(), metric) + '_mean_and_sd_per_vendors.csv'
+        fname_csv_per_vendor_mean_sd = os.path.join(os.getcwd(), 'tables', metric + '_mean_and_sd_per_vendors.csv')
         df_vendor_mean_and_sd.to_csv(fname_csv_per_vendor_mean_sd)
         logger.info('\nCreated: {}'.format(fname_csv_per_vendor_mean_sd))
-        fname_csv_per_vendor_cov = os.path.join(os.getcwd(), metric) + '_cov_per_vendors.csv'
+        fname_csv_per_vendor_cov = os.path.join(os.getcwd(), 'tables', metric + '_cov_per_vendors.csv')
         df_vendor_cov.to_csv(fname_csv_per_vendor_cov)
         logger.info('\nCreated: {}'.format(fname_csv_per_vendor_cov))
 
