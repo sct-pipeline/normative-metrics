@@ -151,6 +151,7 @@ FONTSIZE = 15
 TICKSIZE = 10
 LABELSIZE = 15
 
+
 # TODO - modify this function to save metrics for individual ROI and levels
 def aggregate_per_site(dict_results, metric, dict_exclude_subj, path_participants):
     """
@@ -291,6 +292,7 @@ def aggregate_age_and_sex_per_vendor(path_participants, subjects_processed):
 
     return df_age, df_sex
 
+
 def summary_per_vendor(df, metric):
     """
     Compute mean, sd and cov values pervendor (Siemens, GE, Philips) for individual labels/ROIs (SC, WM, GM, ...)
@@ -391,6 +393,7 @@ def summary_per_vendor(df, metric):
 
     return df_vendor_mean, df_vendor_sd, df_vendor_mean_and_sd, df_vendor_cov, df_summary_vendor
 
+
 def generate_level_evolution_persite(df, df_summary_vendor, metric, path_output):
     """
     Generate figure for each metric - level evolution (C2, C3, C4, C5) per ROI for individual sites
@@ -477,6 +480,7 @@ def generate_level_evolution_persite(df, df_summary_vendor, metric, path_output)
     logger.info('\nCreated: {}\n'.format(fname_fig))
 
     # plt.show()
+
 
 def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, path_output):
     """
@@ -587,6 +591,7 @@ def generate_level_evolution_pervendor(df_vendor, df_summary_vendor, metric, pat
     plt.savefig(fname_fig, dpi=200)
     logger.info('\nCreated: ' + fname_fig)
 
+
 def format_pvalue(p_value, alpha=0.05, include_equal=True):
     """
     If p-value is lower than 0.05, change it to "<0.05", otherwise, round it to two decimals
@@ -645,6 +650,7 @@ def load_participants_file(path_participants):
 
     return participants_df
 
+
 def fetch_subject(filename):
     """
     Get subject ID from filename
@@ -654,6 +660,7 @@ def fetch_subject(filename):
     path, file = os.path.split(filename)
     subject = path.split(os.sep)[-2]
     return subject
+
 
 def remove_subject(subject, metric, dict_exclude_subj):
     """
@@ -671,6 +678,7 @@ def remove_subject(subject, metric, dict_exclude_subj):
         elif subject[4:-2] in dict_exclude_subj[metric]:    # subject[4:-2] extract only site from subject
             return True
     return False
+
 
 def get_parameters():
     parser = argparse.ArgumentParser(
@@ -697,6 +705,7 @@ def get_parameters():
 
     args = parser.parse_args()
     return args
+
 
 def main():
 
