@@ -1,28 +1,47 @@
 #!/usr/bin/env python
 
-# -------------------------------------------------------
-# Extract qMRI metrics (FA, MD, AD, RD, MTR, MTsat) from
-# individual ROIs/labels perlevel between C2 and C5
-# ROIs/labels to process can be specified by input yml file
 #
-# Extracted metrics will be saved as *perlevel.csv files
-# in results/perlevel directory
+# Extract qMRI metrics (FA, MD, AD, RD, MTR, MTsat) for different ROIs/labels (SC, WM, GM, ...) along individual
+# cervical levels (C2, C3, C4, C5)
+#
+# ROIs/labels to process can be specified by input yml file ('-yml-file' - option)
+#
+# Extracted metrics will be saved as *perlevel.csv files in "results/perlevel" directory
 #
 # USAGE:
-# - parallel mode across multiple subjects (using SCT sct_run_batch function and extract_normative_metrics_wrapper.sh wrapper):
-#	    sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results -continue-on-error 1 -script scripts/extract_normative_metrics_wrapper.sh
-# - same as above, but with yml file containing labels to process(passed by -script-args option):
-#	    sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results -continue-on-error 1 -script-args "-yml-file scripts/labels_to_process.yml" -script scripts/extract_normative_metrics_wrapper.sh
+# - parallel mode across multiple subjects (using SCT sct_run_batch function and extract_normative_metrics_wrapper.sh
+# wrapper):
+#	    sct_run_batch
+#	    -jobs -1
+#	    -path-data ~/data-multi-subject/
+#	    -path-output ~/data-multi-subject_results
+#	    -continue-on-error 1
+#	    -script scripts/extract_normative_metrics_wrapper.sh
 #
-# (you can run the script only on some subjects, using -include flag, see sct_run_batch -h)
+# - same as above, but with yml file containing ROIs/labels to process(passed by '-script-args' option):
+#	    sct_run_batch
+#	    -jobs -1
+#	    -path-data ~/data-multi-subject/
+#	    -path-output ~/data-multi-subject_results
+#	    -continue-on-error 1
+#	    -script-args "-yml-file scripts/labels_to_process.yml"
+#	    -script scripts/extract_normative_metrics_wrapper.sh
 #
-# - single subject mode with default labels/ROIs:
-#       extract_normative_metrics.py -path-data ~/data-multi-subject_results -sub sub-amu01
-# - single subject mode with labels/ROIs defined by yml file:
-#       extract_normative_metrics.py -path-data ~/data-multi-subject_results -sub sub-amu01 -yml-file labels_to_process.yml
+# (you can run the sct_run_batch script only on some subjects, using '-include flag', see sct_run_batch -h)
+#
+# - single subject mode (i.e., without parallelization using sct_run_batch) with default ROIs/labels:
+#       extract_normative_metrics.py
+#       -path-data ~/data-multi-subject_results
+#       -sub sub-amu01
+#
+# - single subject mode (i.e., without parallelization using sct_run_batch) with ROIs/labels defined by yml file:
+#       extract_normative_metrics.py
+#       -path-data ~/data-multi-subject_results
+#       -sub sub-amu01
+#       -yml-file labels_to_process.yml
 #
 # Authors: Jan Valosek, Julien Cohen-Adad
-# -------------------------------------------------------
+#
 
 import os
 import sys

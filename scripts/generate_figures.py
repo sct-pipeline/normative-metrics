@@ -1,9 +1,10 @@
 #!/usr/bin/env python
+
 #
-# Generate figures and statistics for individual qMRI metrics (FA, MD, AD, RD, MTR, MTsat) for different labels/ROIs
-# (SC, WM, GM, ...) along individual cervical levels (C2, C3, C4, C5) pervendor and persite
+# Generate figures and compute statistics for individual qMRI metrics (FA, MD, AD, RD, MTR, MTsat) for different
+# labels/ROIs (SC, WM, GM, ...) along individual cervical levels (C2, C3, C4, C5) pervendor and persite
 #
-# USAGE (run this script in the directory with perlevel *csv files, i.e. "results/perlevel" directory):
+# USAGE:
 #
 #   python generate_figures.py
 #   -path-results ~/spineGeneric-multi-subject_results/results/perlevel
@@ -11,12 +12,13 @@
 #   -participants-file ~/spineGeneric-multi-subject_results/results/participants.tsv
 #
 # Input arguments:
-#   -path-results           - directory with *.csv files
-#   -config                 - input yml config file with subjects to exclude (e.g., due to back data quality)
+#   -path-results           - directory with perlevel *.csv files (computed by extract_normative_metrics.py script)
+#   -config                 - input yml config file with subjects to exclude (e.g., due to bad data quality, noise, ...)
 #   -participants-file      - input .tsv file with participants characteristics (sex, age, ...)
 #
 # Inspired by - https://github.com/sct-pipeline/spine-generic/blob/master/processing/generate_figure.py
 # Authors: Jan Valosek, Julien Cohen-Adad
+#
 
 # TODO - combine this script (and probably also whole repo) with spine-generic repo
 
