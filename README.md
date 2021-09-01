@@ -2,7 +2,7 @@
 
 Set of scripts for computing of quantitative MRI (qMRI) metrics from diffusion-weighted (DWI/dMRI) and magnetization transfer (MT) spinal cord data.
 
-The work was presented at ISMRM 2021 - [abstract teaser](https://www.ismrm.org/21/program-files/TeaserSlides/TeasersPresentations/0649-Teaser.html). All results are available in following the [archive](https://github.com/sct-pipeline/normative-metrics/releases/tag/v1.0).
+The work was presented at ISMRM 2021 - [abstract teaser](https://www.ismrm.org/21/program-files/TeaserSlides/TeasersPresentations/0649-Teaser.html). All results are available in the following [archive](https://github.com/sct-pipeline/normative-metrics/releases/tag/v1.0).
 
 ## Motivation
 
