@@ -1,6 +1,6 @@
 # Normative qMRI metrics
 
-Set of scripts for computing of quantitative MRI (qMRI) metrics from diffusion-weighted (DWI/dMRI) and magnetic transfer (MT) spinal cord MRI data.
+Set of scripts for computing of quantitative MRI (qMRI) metrics from diffusion-weighted (DWI/dMRI) and magnetization transfer (MT) spinal cord data.
 
 ## Motivation
 
