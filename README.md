@@ -2,6 +2,8 @@
 
 Set of scripts for computing of quantitative MRI (qMRI) metrics from diffusion-weighted (DWI/dMRI) and magnetization transfer (MT) spinal cord data.
 
+The work was presented at ISMRM 2021 - [abstract teaser](https://www.ismrm.org/21/program-files/TeaserSlides/TeasersPresentations/0649-Teaser.html). All results are available in following the [archive](https://github.com/sct-pipeline/normative-metrics/releases/tag/v1.0).
+
 ## Motivation
 
 To compute the normative qMRI metrics from a large cohort of healthy subjects scanned across multiple sites for various spinal cord ROI based on PAM50 atlas and analyze their variability per individual vertebral levels (C2-C5) and also per individual vendors (Siemens, Philips, GE).
