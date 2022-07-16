@@ -1,16 +1,21 @@
 # Normative qMRI metrics
 
-Set of scripts for computing of quantitative MRI (qMRI) metrics from diffusion-weighted (DWI/dMRI) and magnetization transfer (MT) spinal cord data.
+Set of scripts for computation of quantitative MRI (qMRI) metrics from diffusion-weighted (DWI/dMRI) and magnetization transfer (MT) spinal cord data.
 
-The work was presented at ISMRM 2021 - [abstract teaser](https://www.ismrm.org/21/program-files/TeaserSlides/TeasersPresentations/0649-Teaser.html). All results are available in the following [archive](https://github.com/sct-pipeline/normative-metrics/releases/tag/v1.0).
+The work was presented at ISMRM 2021 - abstract 0649 ([teaser](https://www.ismrm.org/21/program-files/TeaserSlides/TeasersPresentations/0649-Teaser.html), [full abstract](https://www.ismrm.org/21/program-files/O-32.htm)):
+
+<img width="600" alt="image" src="https://user-images.githubusercontent.com/39456460/179341025-ad3d6a72-0688-4110-8370-4a3f58cb4f5a.png">
+
+
+All results are available in the following [archive](https://github.com/sct-pipeline/normative-metrics/releases/tag/v1.0).
 
 ## Motivation
 
-To compute the normative qMRI metrics from a large cohort of healthy subjects scanned across multiple sites for various spinal cord ROI based on PAM50 atlas and analyze their variability per individual vertebral levels (C2-C5) and also per individual vendors (Siemens, Philips, GE).
+To compute the normative qMRI metrics from a large cohort of healthy subjects scanned across multiple sites for various spinal cord ROI based on the PAM50 atlas and analyze their variability per individual vertebral levels (C2-C5) and per individual vendors (Siemens, Philips, GE).
 
 ## Data 
 
-Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/index.html) of healthy subjects [acquired](https://osf.io/tt4z9/) and [analyzed](https://spine-generic.readthedocs.io/en/latest/documentation.html#getting-started) within _spine generic protocol_ project.
+Multi-center multi-vendor [data](https://spine-generic.readthedocs.io/en/latest/index.html) of healthy subjects [acquired](https://osf.io/tt4z9/) and [analyzed](https://spine-generic.readthedocs.io/en/latest/documentation.html#getting-started) within the _spine-generic_ project.
 
 ## Prerequisites
 [Spinal Cord Toolbox (SCT) v4.3](https://github.com/neuropoly/spinalcordtoolbox)
@@ -56,7 +61,7 @@ sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-mult
 
 (Analysis will automatically use manually-corrected labels and segmentation located in `derivatives/labels/`)
 
-- Compute qMRI metrics from various ROI per individual vertebral levels across all subjects using `extract_normative_metrics_wrapper.sh` script :
+- Compute qMRI metrics from various ROI per individual vertebral levels across all subjects using the `extract_normative_metrics_wrapper.sh` script :
 
 ```
 cd ~
@@ -65,9 +70,9 @@ cd normative-metrics
 sct_run_batch -jobs -1 -path-data ~/data-multi-subject/ -path-output ~/data-multi-subject_results/ -continue-on-error 1 -script scripts/extract_normative_metrics_wrapper.sh
 ```
 
-(You can run the script only for specific subjects using `-include <SUBJECT>` flag)
+(You can run the script only for specific subjects using the `-include <SUBJECT>` flag)
 
-(Individual \*perlevel.csv files will be stored in `/results/perlevel` folder)
+(Individual \*perlevel.csv files will be stored in the `/results/perlevel` folder)
 
 - Generate figures and compute statistics
 
